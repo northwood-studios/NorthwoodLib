@@ -3,6 +3,7 @@
 		<TargetFramework>net472</TargetFramework>
 		<LangVersion>7.3</LangVersion>
 		<RootNamespace>SLPublic</RootNamespace>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
