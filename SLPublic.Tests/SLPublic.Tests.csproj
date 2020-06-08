@@ -1,8 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net472</TargetFramework>
 		<LangVersion>7.3</LangVersion>
 		<RootNamespace>SLPublic.Tests</RootNamespace>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 	<ItemGroup>
