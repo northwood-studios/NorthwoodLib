@@ -27,7 +27,7 @@ namespace SLPublic.Tests
 			dispatcher.Dispatch(() => list.Add(4));
 			dispatcher.Dispatch(() => list.Add(5));
 			dispatcher.Invoke();
-			Assert.True(list.SequenceEqual(new[]{1, 2, 3, 4, 5}));
+			Assert.True(list.SequenceEqual(new[] { 1, 2, 3, 4, 5 }));
 		}
 	}
 }

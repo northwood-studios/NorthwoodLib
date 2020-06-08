@@ -31,5 +31,12 @@ namespace SLPublic.Tests
 					Assert.Equal(i, ptr[i]);
 			}
 		}
+
+		[Fact]
+		public unsafe void PointerTest()
+		{
+			using (NativeMemory memory = new NativeMemory(sizeof(int) * 10))
+				Assert.Equal(memory.Data, new IntPtr(memory.ToPointer<int>()));
+		}
 	}
 }
