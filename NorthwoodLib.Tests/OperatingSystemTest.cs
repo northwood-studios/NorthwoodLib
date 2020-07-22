@@ -1,7 +1,7 @@
 using System;
 using Xunit;
 
-namespace SLPublic.Tests
+namespace NorthwoodLib.Tests
 {
 	public class OperatingSystemTest
 	{

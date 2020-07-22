@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-namespace SLPublic.Tests
+namespace NorthwoodLib.Tests
 {
 	public class ActionDispatcherTest
 	{

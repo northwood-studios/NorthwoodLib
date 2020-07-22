@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 // ReSharper disable HeapView.BoxingAllocation
 
-namespace SLPublic
+namespace NorthwoodLib
 {
 	public static class OperatingSystem
 	{

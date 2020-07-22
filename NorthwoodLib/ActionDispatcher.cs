@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 
-namespace SLPublic
+namespace NorthwoodLib
 {
 	public sealed class ActionDispatcher
 	{

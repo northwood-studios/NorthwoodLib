@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace SLPublic.Pools
+namespace NorthwoodLib.Pools
 {
 	public static class ListPool<T>
 	{

@@ -18,7 +18,7 @@ jobs:
       run: dotnet restore
 
     - name: Build
-      run: dotnet publish -c Release -o "${{github.workspace}}/Release" "SLPublic"
+      run: dotnet publish -c Release -o "${{github.workspace}}/Release" "NorthwoodLib"
       
     - name: Test
       run: dotnet test
@@ -26,5 +26,5 @@ jobs:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.0.1
       with:
-        name: SLPublic
+        name: NorthwoodLib
         path: ${{github.workspace}}/Release

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Text;
 
-namespace SLPublic.Pools
+namespace NorthwoodLib.Pools
 {
 	public static class StringBuilderPool
 	{

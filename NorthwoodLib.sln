@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SLPublic", "SLPublic\SLPublic.csproj", "{2CEC9B35-D8E6-4CD2-9CB4-29B671712C5C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthwoodLib", "NorthwoodLib\NorthwoodLib.csproj", "{2CEC9B35-D8E6-4CD2-9CB4-29B671712C5C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SLPublic.Tests", "SLPublic.Tests\SLPublic.Tests.csproj", "{07755203-5D91-42E9-B576-32099B2CCD45}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthwoodLib.Tests", "NorthwoodLib.Tests\NorthwoodLib.Tests.csproj", "{07755203-5D91-42E9-B576-32099B2CCD45}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

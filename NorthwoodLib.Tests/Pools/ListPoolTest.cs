@@ -1,9 +1,9 @@
-using SLPublic.Pools;
+using NorthwoodLib.Pools;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-namespace SLPublic.Tests.Pools
+namespace NorthwoodLib.Tests.Pools
 {
 	public class ListPoolTest
 	{

@@ -1,8 +1,8 @@
-using SLPublic.Pools;
+using NorthwoodLib.Pools;
 using System.Text;
 using Xunit;
 
-namespace SLPublic.Tests.Pools
+namespace NorthwoodLib.Tests.Pools
 {
 	public class StringBuilderPoolTest
 	{

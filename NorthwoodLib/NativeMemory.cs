@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace SLPublic
+namespace NorthwoodLib
 {
 	public sealed unsafe class NativeMemory : IDisposable
 	{
