@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2.2.0
@@ -12,19 +12,19 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1.5.0
       with:
-        dotnet-version: '3.1'
+        dotnet-version: 3.1
 
     - name: Install dependencies
       run: dotnet restore
 
     - name: Build
-      run: dotnet publish -c Release -o "${{github.workspace}}/Release" "NorthwoodLib"
-      
+      run: dotnet publish -c Release -o Release NorthwoodLib
+
     - name: Test
       run: dotnet test
-        
+
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.0.1
       with:
         name: NorthwoodLib
-        path: ${{github.workspace}}/Release
+        path: Release
