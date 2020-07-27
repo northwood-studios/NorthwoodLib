@@ -4,16 +4,18 @@ using System.Collections.Generic;
 
 namespace NorthwoodLib.Pools
 {
-	public static class ListPool<T>
+	public sealed class ListPool<T> : IPool<List<T>>
 	{
-		private static readonly ConcurrentQueue<List<T>> _pool = new ConcurrentQueue<List<T>>();
+		public static readonly ListPool<T> Shared = new ListPool<T>();
 
-		public static List<T> Rent()
+		private readonly ConcurrentQueue<List<T>> _pool = new ConcurrentQueue<List<T>>();
+
+		public List<T> Rent()
 		{
 			return _pool.TryDequeue(out List<T> list) ? list : new List<T>(512);
 		}
 
-		public static List<T> Rent(int capacity)
+		public List<T> Rent(int capacity)
 		{
 			if (_pool.TryDequeue(out List<T> list))
 			{
@@ -25,7 +27,7 @@ namespace NorthwoodLib.Pools
 			return new List<T>(Math.Max(capacity, 512));
 		}
 
-		public static List<T> Rent(IEnumerable<T> enumerable)
+		public List<T> Rent(IEnumerable<T> enumerable)
 		{
 			if (_pool.TryDequeue(out List<T> list))
 			{
@@ -36,7 +38,7 @@ namespace NorthwoodLib.Pools
 			return new List<T>(enumerable);
 		}
 
-		public static void Return(List<T> list)
+		public void Return(List<T> list)
 		{
 			list.Clear();
 			_pool.Enqueue(list);

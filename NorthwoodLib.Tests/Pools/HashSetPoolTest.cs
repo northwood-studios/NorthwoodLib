@@ -5,15 +5,15 @@ using Xunit;
 
 namespace NorthwoodLib.Tests.Pools
 {
-	public class ListPoolTest
+	public class HashSetPoolTest
 	{
 		[Fact]
 		public void ValidTest()
 		{
-			List<string> list = ListPool<string>.Shared.Rent();
-			Assert.NotNull(list);
-			Assert.Empty(list);
-			ListPool<string>.Shared.Return(list);
+			HashSet<string> set = HashSetPool<string>.Shared.Rent();
+			Assert.NotNull(set);
+			Assert.Empty(set);
+			HashSetPool<string>.Shared.Return(set);
 		}
 
 		[Theory]
@@ -23,9 +23,9 @@ namespace NorthwoodLib.Tests.Pools
 		[InlineData(1024)]
 		public void CapacityTest(int capacity)
 		{
-			List<string> list = ListPool<string>.Shared.Rent(capacity);
-			Assert.True(list.Capacity >= capacity);
-			ListPool<string>.Shared.Return(list);
+			HashSet<string> set = HashSetPool<string>.Shared.Rent(capacity);
+			Assert.True(set.EnsureCapacity(0) >= capacity);
+			HashSetPool<string>.Shared.Return(set);
 		}
 
 		[Theory]
@@ -35,9 +35,9 @@ namespace NorthwoodLib.Tests.Pools
 		[InlineData(new object[] { new[] { "test", "test2", "test3" } })]
 		public void SequenceTest(string[] input)
 		{
-			List<string> list = ListPool<string>.Shared.Rent(input);
-			Assert.True(list.SequenceEqual(input));
-			ListPool<string>.Shared.Return(list);
+			HashSet<string> set = HashSetPool<string>.Shared.Rent(input);
+			Assert.True(set.SequenceEqual(input));
+			HashSetPool<string>.Shared.Return(set);
 		}
 	}
 }
