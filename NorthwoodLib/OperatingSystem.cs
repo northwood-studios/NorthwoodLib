@@ -66,7 +66,13 @@ namespace NorthwoodLib
 				VersionString += $"-{osVersionInfo.wServicePackMajor}.{osVersionInfo.wServicePackMinor}";
 			if (!string.IsNullOrWhiteSpace(osVersionInfo.szCSDVersion))
 				VersionString += $" {osVersionInfo.szCSDVersion}";
-			VersionString += $" {(Environment.Is64BitOperatingSystem ? "64bit" : "32bit")} Process: {IntPtr.Size * 8}bit";
+
+			int systemBits = Environment.Is64BitOperatingSystem ? 64 : 32;
+			int processBits = IntPtr.Size * 8;
+			if (systemBits == processBits)
+				VersionString += $" {systemBits}bit";
+			else
+				VersionString += $" {systemBits}bit Process: {processBits}bit";
 			VersionString = VersionString.Trim();
 			// ReSharper restore HeapView.BoxingAllocation
 		}
