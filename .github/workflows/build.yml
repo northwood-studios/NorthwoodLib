@@ -4,7 +4,11 @@ on: [push, pull_request]
 
 jobs:
   build:
+    name: Build ${{ matrix.framework }}
     runs-on: windows-latest
+    strategy:
+      matrix:
+        framework: [net472, netstandard2.1]
 
     steps:
     - uses: actions/checkout@v2.2.0
@@ -12,19 +16,16 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1.5.0
       with:
-        dotnet-version: '3.1'
+        dotnet-version: 3.1
 
     - name: Install dependencies
       run: dotnet restore
 
     - name: Build
-      run: dotnet publish -c Release -o "${{github.workspace}}/Release" "NorthwoodLib"
-      
-    - name: Test
-      run: dotnet test
+      run: dotnet publish -c Release -f ${{ matrix.framework }} -o "${{github.workspace}}/Release" "NorthwoodLib"
         
-    - name: Upload a Build Artifact
+    - name: Upload a Build Artifact for ${{ matrix.framework }
       uses: actions/upload-artifact@v2.0.1
       with:
-        name: NorthwoodLib
+        name: NorthwoodLib-${{ matrix.framework }
         path: ${{github.workspace}}/Release
