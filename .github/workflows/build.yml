@@ -24,8 +24,8 @@ jobs:
     - name: Build
       run: dotnet publish -c Release -f ${{ matrix.framework }} -o "${{github.workspace}}/Release" "NorthwoodLib"
         
-    - name: Upload a Build Artifact for ${{ matrix.framework }
+    - name: Upload a Build Artifact for ${{ matrix.framework }}
       uses: actions/upload-artifact@v2.0.1
       with:
-        name: NorthwoodLib-${{ matrix.framework }
+        name: NorthwoodLib-${{ matrix.framework }}
         path: ${{github.workspace}}/Release
