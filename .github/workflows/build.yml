@@ -18,7 +18,7 @@ jobs:
       with:
         dotnet-version: 3.1
 
-    - name: Install dependencies
+    - name: Restore
       run: dotnet restore
 
     - name: Build
