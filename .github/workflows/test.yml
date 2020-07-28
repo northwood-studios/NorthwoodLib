@@ -9,11 +9,10 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
+        framework: [netcoreapp3.1]
         include:
         - os: windows-latest
-          framework: [net472, netcoreapp3.1]
-        - os: ubuntu-latest
-          framework: [netcoreapp3.1]
+          framework: net472
           
     steps:
     - uses: actions/checkout@v2.2.0
