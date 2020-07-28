@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
 		<LangVersion>7.3</LangVersion>
 		<RootNamespace>NorthwoodLib.Tests</RootNamespace>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
