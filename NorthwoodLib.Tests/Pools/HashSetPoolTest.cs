@@ -24,7 +24,9 @@ namespace NorthwoodLib.Tests.Pools
 		public void CapacityTest(int capacity)
 		{
 			HashSet<string> set = HashSetPool<string>.Shared.Rent(capacity);
+#if NETCOREAPP
 			Assert.True(set.EnsureCapacity(0) >= capacity);
+#endif
 			HashSetPool<string>.Shared.Return(set);
 		}
 
