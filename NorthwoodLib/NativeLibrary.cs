@@ -28,7 +28,7 @@ namespace NorthwoodLib
 		private static extern IntPtr GetProcessAddressLibdl(ModuleHandle handle, string name);
 
 		[DllImport(Libdl, EntryPoint = "dlclose")]
-		private static extern bool FreeLibraryLibdl(ModuleHandle handle);
+		private static extern int FreeLibraryLibdl(ModuleHandle handle);
 
 		[DllImport(Libdl, EntryPoint = "dlerror", CharSet = CharSet.Ansi)]
 		private static extern string GetErrorLibdl();
@@ -69,7 +69,7 @@ namespace NorthwoodLib
 				return;
 			}
 
-			if (!FreeLibraryLibdl(handle))
+			if (FreeLibraryLibdl(handle) != 0)
 				throw new DlException();
 		}
 
