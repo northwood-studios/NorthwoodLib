@@ -35,6 +35,9 @@ namespace NorthwoodLib
 
 		// ReSharper disable InconsistentNaming
 #pragma warning disable IDE1006
+		[DllImport(Ntdll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "wine_get_version")]
+		private static extern string GetWineVersion();
+
 		[DllImport(Ntdll)]
 		private static extern uint RtlGetVersion(ref OSVERSIONINFO lpVersionInformation);
 
@@ -72,6 +75,18 @@ namespace NorthwoodLib
 				return;
 			}
 
+			VersionString = "";
+			try
+			{
+				string wineVersion = GetWineVersion();
+				if (!string.IsNullOrWhiteSpace(wineVersion))
+					VersionString += $"Wine {wineVersion} ";
+			}
+			catch
+			{
+				// not using wine, ignore
+			}
+
 			OSVERSIONINFO osVersionInfo = new OSVERSIONINFO
 			{
 				dwOSVersionInfoSize = (uint) Marshal.SizeOf<OSVERSIONINFO>()
@@ -85,7 +100,7 @@ namespace NorthwoodLib
 
 			// ReSharper disable HeapView.BoxingAllocation
 			// pass by ref to avoid huge struct copiesk
-			VersionString = $"Windows {ProcessWindowsVersion(ref osVersionInfo)}";
+			VersionString += $"Windows {ProcessWindowsVersion(ref osVersionInfo)}";
 			string product = GetProductInfo(ref osVersionInfo);
 			if (!string.IsNullOrWhiteSpace(product))
 				VersionString += $" {product}";
