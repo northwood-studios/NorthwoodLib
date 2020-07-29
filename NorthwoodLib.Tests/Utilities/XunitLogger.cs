@@ -5,6 +5,9 @@ using Xunit.Abstractions;
 
 namespace NorthwoodLib.Tests.Utilities
 {
+	/// <summary>
+	/// Logs data to XUnit output and log file set with environment variable xunitlogpath
+	/// </summary>
 	internal sealed class XunitLogger : ITestOutputHelper, IDisposable
 	{
 		private readonly ITestOutputHelper _outputHelper;

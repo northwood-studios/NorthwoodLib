@@ -13,6 +13,11 @@ namespace NorthwoodLib
 		/// </summary>
 		public static event Action<string, LogType> Logged;
 
+		/// <summary>
+		/// Fires <see cref="Logged"/> with provided data
+		/// </summary>
+		/// <param name="message">Message text</param>
+		/// <param name="type">Message type</param>
 		internal static void Log(string message, LogType type) => Logged?.Invoke(message, type);
 	}
 }
