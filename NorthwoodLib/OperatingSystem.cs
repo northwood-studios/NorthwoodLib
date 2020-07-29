@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using NorthwoodLib.Logging;
 
 namespace NorthwoodLib
 {
@@ -81,10 +82,12 @@ namespace NorthwoodLib
 				string wineVersion = GetWineVersion();
 				if (!string.IsNullOrWhiteSpace(wineVersion))
 					VersionString += $"Wine {wineVersion} ";
+				PlatformSettings.Log($"Wine {wineVersion} detected!", LogType.Info);
 			}
-			catch
+			catch (Exception ex)
 			{
 				// not using wine, ignore
+				PlatformSettings.Log($"Wine not detected! {ex.Message}", LogType.Debug);
 			}
 
 			OSVERSIONINFO osVersionInfo = new OSVERSIONINFO
