@@ -13,6 +13,8 @@ jobs:
         include:
         - os: windows-latest
           framework: net472
+    env:
+      xunitlogpath: ${{github.workspace}}/xunitlog.txt
           
     steps:
     - uses: actions/checkout@v2.2.0
@@ -27,3 +29,11 @@ jobs:
 
     - name: Test
       run: dotnet test -f ${{ matrix.framework }}
+      
+    - uses: pCYSl5EDgo/cat@master
+      id: readlog
+      with:
+        path: ${{ xunitlogpath }}
+
+    - name: Write log
+      run: echo ${{ steps.readlog.outputs.text }}
