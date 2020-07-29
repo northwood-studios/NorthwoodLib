@@ -33,14 +33,14 @@ namespace NorthwoodLib.Tests.Utilities
 		{
 			_outputHelper?.WriteLine(message);
 			lock (_writeLock)
-				_writer?.WriteLine($"[{_className}] {message}\n{TruncateToLastNewline(Environment.StackTrace, 2000)}\n");
+				_writer?.WriteLine($"[{_className}] {message}\n{TruncateToLastNewline(Environment.StackTrace, 1000)}\n");
 		}
 
 		public void WriteLine(string format, params object[] args)
 		{
 			_outputHelper?.WriteLine(format, args);
 			lock (_writeLock)
-				_writer?.WriteLine($"[{_className}] {string.Format(format, args)}\n{TruncateToLastNewline(Environment.StackTrace, 2000)}\n");
+				_writer?.WriteLine($"[{_className}] {string.Format(format, args)}\n{TruncateToLastNewline(Environment.StackTrace, 1000)}\n");
 		}
 
 		private static string TruncateToLastNewline(string text, int maxSize)
