@@ -4,17 +4,32 @@ using System.Text;
 
 namespace NorthwoodLib.Pools
 {
+	/// <summary>
+	/// Returns pooled <see cref="StringBuilder"/>
+	/// </summary>
 	public sealed class StringBuilderPool : IPool<StringBuilder>
 	{
+		/// <summary>
+		/// Gets a shared <see cref="StringBuilderPool"/> instance
+		/// </summary>
 		public static readonly StringBuilderPool Shared = new StringBuilderPool();
 
 		private readonly ConcurrentQueue<StringBuilder> _pool = new ConcurrentQueue<StringBuilder>();
 
+		/// <summary>
+		/// Gives a pooled <see cref="StringBuilder"/>
+		/// </summary>
+		/// <returns><see cref="StringBuilder"/> from the pool</returns>
 		public StringBuilder Rent()
 		{
 			return _pool.TryDequeue(out StringBuilder stringBuilder) ? stringBuilder : new StringBuilder(512);
 		}
 
+		/// <summary>
+		/// Gives a pooled <see cref="StringBuilder"/> with provided capacity
+		/// </summary>
+		/// <param name="capacity">Requested capacity</param>
+		/// <returns><see cref="StringBuilder"/> from the pool</returns>
 		public StringBuilder Rent(int capacity)
 		{
 			if (_pool.TryDequeue(out StringBuilder stringBuilder))
@@ -27,6 +42,11 @@ namespace NorthwoodLib.Pools
 			return new StringBuilder(Math.Max(capacity, 512));
 		}
 
+		/// <summary>
+		/// Gives a pooled <see cref="StringBuilder"/> with initial content
+		/// </summary>
+		/// <param name="text">Initial content</param>
+		/// <returns><see cref="StringBuilder"/> from the pool</returns>
 		public StringBuilder Rent(string text)
 		{
 			if (_pool.TryDequeue(out StringBuilder stringBuilder))
@@ -38,6 +58,10 @@ namespace NorthwoodLib.Pools
 			return new StringBuilder(text, 512);
 		}
 
+		/// <summary>
+		/// Returns a <see cref="StringBuilder"/> to the pool
+		/// </summary>
+		/// <param name="stringBuilder">Returned <see cref="StringBuilder"/></param>
 		public void Return(StringBuilder stringBuilder)
 		{
 			stringBuilder.Clear();
