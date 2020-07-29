@@ -29,11 +29,6 @@ jobs:
 
     - name: Test
       run: dotnet test -f ${{ matrix.framework }}
-      
-    - uses: pCYSl5EDgo/cat@master
-      id: readlog
-      with:
-        path: ${{ env.xunitlogpath }}
 
     - name: Write log
-      run: echo ${{ steps.readlog.outputs.text }}
+      run: cat ${{ env.xunitlogpath }}
