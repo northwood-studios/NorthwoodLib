@@ -8,7 +8,7 @@ namespace NorthwoodLib.Tests
 	public class NativeLibraryTest
 	{
 		[Theory]
-		[InlineData("/")]
+		[InlineData(" some text żźć")]
 		[InlineData("invalidname.zip")]
 		public void LoadDllFailTest(string path)
 		{
