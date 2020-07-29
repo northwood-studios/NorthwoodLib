@@ -27,7 +27,7 @@ namespace NorthwoodLib.Tests
 		[Fact]
 		public void CallTest()
 		{
-			string module = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "kernel32" : "libdl";
+			string module = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "kernel32" : "libc";
 			NativeLibrary.ModuleHandle moduleHandle = NativeLibrary.Load(module);
 			string method = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "GetCurrentProcessId" : "getpid";
 			Assert.Equal(Process.GetCurrentProcess().Id, moduleHandle.GetFunctionDelegate<ProcessIdDelegate>(method)());
