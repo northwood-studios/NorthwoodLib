@@ -33,7 +33,7 @@ jobs:
     - uses: pCYSl5EDgo/cat@master
       id: readlog
       with:
-        path: ${{ xunitlogpath }}
+        path: ${{ env.xunitlogpath }}
 
     - name: Write log
       run: echo ${{ steps.readlog.outputs.text }}
