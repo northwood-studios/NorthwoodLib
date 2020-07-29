@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using NorthwoodLib.Logging;
 using Xunit.Abstractions;
 
 namespace NorthwoodLib.Tests.Utilities
