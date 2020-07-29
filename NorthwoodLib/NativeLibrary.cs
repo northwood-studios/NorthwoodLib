@@ -56,7 +56,7 @@ namespace NorthwoodLib
 				return handlewin == ModuleHandle.Null ? throw new Win32Exception() : handlewin;
 			}
 
-			ModuleHandle handle = LoadLibraryLibdl(path, DlopenFlag.Now);
+			ModuleHandle handle = LoadLibraryLibdl(path, DlopenFlag.Lazy);
 			return handle == ModuleHandle.Null ? throw new DlException() : handle;
 		}
 
