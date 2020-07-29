@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using NorthwoodLib.Logging;
 using Xunit.Abstractions;
 
 namespace NorthwoodLib.Tests.Utilities
@@ -15,6 +16,11 @@ namespace NorthwoodLib.Tests.Utilities
 		private static readonly string _logPath = Environment.GetEnvironmentVariable("xunitlogpath");
 		private static readonly object _writeLock = new object();
 
+		/// <summary>
+		/// Logs data to XUnit output and log file set with environment variable xunitlogpath
+		/// </summary>
+		/// <param name="output">XUnit logger</param>
+		/// <param name="type">Test class</param>
 		public XunitLogger(ITestOutputHelper output, Type type)
 		{
 			_outputHelper = output;
@@ -29,6 +35,10 @@ namespace NorthwoodLib.Tests.Utilities
 			}
 		}
 
+		/// <summary>
+		/// Writes a message to XUnit output and log file
+		/// </summary>
+		/// <param name="message">Text to write</param>
 		public void WriteLine(string message)
 		{
 			_outputHelper?.WriteLine(message);
@@ -36,6 +46,11 @@ namespace NorthwoodLib.Tests.Utilities
 				_writer?.WriteLine($"[{_className}] {message}\n{TruncateToLastNewline(Environment.StackTrace, 1000)}\n");
 		}
 
+		/// <summary>
+		/// Writes a formatted message to XUnit output and log file
+		/// </summary>
+		/// <param name="format">Text used for formatting</param>
+		/// <param name="args">Data inserted into format</param>
 		public void WriteLine(string format, params object[] args)
 		{
 			_outputHelper?.WriteLine(format, args);
@@ -63,6 +78,9 @@ namespace NorthwoodLib.Tests.Utilities
 			}
 		}
 
+		/// <summary>
+		/// Releases the logfile stream
+		/// </summary>
 		public void Dispose()
 		{
 			ReleaseUnmanagedResources();
