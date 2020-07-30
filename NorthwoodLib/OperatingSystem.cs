@@ -11,6 +11,9 @@ namespace NorthwoodLib
 	public static class OperatingSystem
 	{
 #pragma warning disable IDE1006
+		/// <summary>
+		/// Managed version of https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw
+		/// </summary>
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 		private struct OSVERSIONINFO
 		{
@@ -36,18 +39,46 @@ namespace NorthwoodLib
 
 		// ReSharper disable InconsistentNaming
 #pragma warning disable IDE1006
+		/// <summary>
+		/// Returns used Wine version https://wiki.winehq.org/Developer_FAQ#How_can_I_detect_Wine.3F
+		/// </summary>
+		/// <returns>Used Wine version</returns>
 		[DllImport(Ntdll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "wine_get_version")]
 		private static extern string GetWineVersion();
 
+		/// <summary>
+		/// Returns version information about the currently running operating system. https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-rtlgetversion
+		/// </summary>
+		/// <param name="lpVersionInformation"><see cref="OSVERSIONINFO"/> that contains the version information about the currently running operating system.</param>
+		/// <returns><see cref="RtlGetVersion"/> returns STATUS_SUCCESS.</returns>
 		[DllImport(Ntdll)]
 		private static extern uint RtlGetVersion(ref OSVERSIONINFO lpVersionInformation);
 
+		/// <summary>
+		/// Converts the specified NTSTATUS code to its equivalent system error code. https://docs.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-rtlntstatustodoserror
+		/// </summary>
+		/// <param name="Status">The NTSTATUS code to be converted.</param>
+		/// <returns>Corresponding system error code.</returns>
 		[DllImport(Ntdll)]
 		private static extern int RtlNtStatusToDosError(uint Status);
 
+		/// <summary>
+		/// Retrieves the specified system metric or system configuration setting. https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
+		/// </summary>
+		/// <param name="nIndex">The system metric or configuration setting to be retrieved.</param>
+		/// <returns>Requested system metric or configuration setting.</returns>
 		[DllImport(User32)]
 		private static extern int GetSystemMetrics(int nIndex);
 
+		/// <summary>
+		/// Retrieves the product type for the operating system on the local computer, and maps the type to the product types supported by the specified operating system. https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getproductinfo
+		/// </summary>
+		/// <param name="idwOSMajorVersiond">The major version number of the operating system.</param>
+		/// <param name="dwOSMinorVersion">The minor version number of the operating system.</param>
+		/// <param name="dwSpMajorVersion">The major version number of the operating system service pack.</param>
+		/// <param name="dwSpMinorVersion">The minor version number of the operating system service pack.</param>
+		/// <param name="pdwReturnedProductType">The product type.</param>
+		/// <returns>A nonzero value on success. This function fails if one of the input parameters is invalid.</returns>
 		[DllImport(Kernel32)]
 		private static extern bool GetProductInfo(uint idwOSMajorVersiond, uint dwOSMinorVersion, uint dwSpMajorVersion, uint dwSpMinorVersion, out uint pdwReturnedProductType);
 #pragma warning restore IDE1006
@@ -192,6 +223,7 @@ namespace NorthwoodLib
 					case 5:
 						// ReSharper disable once InconsistentNaming
 #pragma warning disable IDE1006
+						// from https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
 						const int SM_SERVERR2 = 89;
 #pragma warning restore IDE1006
 						switch (version.dwMinorVersion)
