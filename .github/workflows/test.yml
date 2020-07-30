@@ -28,7 +28,7 @@ jobs:
       run: dotnet restore
 
     - name: Test
-      run: dotnet test -f ${{ matrix.framework }} --blame /p:ParallelizeTestCollections=false
+      run: dotnet test -f ${{ matrix.framework }}
 
     - name: Write log
       run: cat ${{ env.xunitlogpath }}
