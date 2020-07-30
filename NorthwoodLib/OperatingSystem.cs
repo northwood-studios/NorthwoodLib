@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.InteropServices;
 using NorthwoodLib.Logging;
 
@@ -96,9 +97,26 @@ namespace NorthwoodLib
 		/// Returns human readable description of the used Used Operating System
 		/// </summary>
 		public static readonly string VersionString;
+		/// <summary>
+		/// Currently used System
+		/// </summary>
+		public static readonly Platform Platform;
 
 		static OperatingSystem()
 		{
+#pragma warning disable IDE0045
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				Platform = Platform.Windows;
+			else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+				Platform = Platform.Mac;
+			else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+				Platform = Directory.Exists("/Applications") && Directory.Exists("/System") && Directory.Exists("/Users") && Directory.Exists("/Volumes")
+					? Platform.Mac
+					: Platform.Linux;
+			else
+				Platform = Platform.Unknown;
+#pragma warning restore IDE0045
+
 			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
 				Version = Environment.OSVersion.Version;

@@ -50,6 +50,9 @@ namespace NorthwoodLib
 
 		public static ModuleHandle Load(string path)
 		{
+			string extension = GetExtension();
+			if (!path.EndsWith(extension))
+				path += extension;
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
 				ModuleHandle handlewin = LoadLibraryWindows(path);
@@ -88,6 +91,17 @@ namespace NorthwoodLib
 		public static T GetFunctionDelegate<T>(this ModuleHandle handle, string name) where T : Delegate
 		{
 			return Marshal.GetDelegateForFunctionPointer<T>(GetFunctionPointer(handle, name));
+		}
+
+		private static string GetExtension()
+		{
+			switch (OperatingSystem.Platform)
+			{
+				case Platform.Windows: return ".dll";
+				case Platform.Linux: return ".so";
+				case Platform.Mac: return ".dylib";
+				default: throw new PlatformNotSupportedException();
+			}
 		}
 
 		public readonly struct ModuleHandle : IEquatable<ModuleHandle>
