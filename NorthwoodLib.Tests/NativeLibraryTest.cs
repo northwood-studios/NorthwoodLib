@@ -27,7 +27,7 @@ namespace NorthwoodLib.Tests
 		[Fact]
 		public void CallTest()
 		{
-			string module = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "kernel32" : "libc";
+			string module = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "kernel32" : "libc.so";
 			NativeLibrary.ModuleHandle moduleHandle = NativeLibrary.Load(module);
 			string method = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "GetCurrentProcessId" : "getpid";
 			Assert.Equal(Process.GetCurrentProcess().Id, moduleHandle.GetFunctionDelegate<ProcessIdDelegate>(method)());
@@ -37,7 +37,7 @@ namespace NorthwoodLib.Tests
 		[Fact]
 		public void InvalidMethodTest()
 		{
-			string module = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "kernel32" : "libdl";
+			string module = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "kernel32" : "libdl.so";
 			NativeLibrary.ModuleHandle moduleHandle = NativeLibrary.Load(module);
 			const string method = "invalid_method_name123456789";
 
