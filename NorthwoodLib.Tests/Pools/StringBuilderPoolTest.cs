@@ -9,10 +9,10 @@ namespace NorthwoodLib.Tests.Pools
 		[Fact]
 		public void ValidTest()
 		{
-			StringBuilder sb = StringBuilderPool.Rent();
+			StringBuilder sb = StringBuilderPool.Shared.Rent();
 			Assert.NotNull(sb);
 			Assert.True(sb.Length == 0);
-			StringBuilderPool.Return(sb);
+			StringBuilderPool.Shared.Return(sb);
 		}
 
 		[Theory]
@@ -22,9 +22,9 @@ namespace NorthwoodLib.Tests.Pools
 		[InlineData(1024)]
 		public void CapacityTest(int capacity)
 		{
-			StringBuilder sb = StringBuilderPool.Rent(capacity);
+			StringBuilder sb = StringBuilderPool.Shared.Rent(capacity);
 			Assert.True(sb.Capacity >= capacity);
-			StringBuilderPool.Return(sb);
+			StringBuilderPool.Shared.Return(sb);
 		}
 
 		[Theory]
@@ -33,9 +33,9 @@ namespace NorthwoodLib.Tests.Pools
 		[InlineData("test \n \0 \r")]
 		public void TextTest(string input)
 		{
-			StringBuilder sb = StringBuilderPool.Rent(input);
+			StringBuilder sb = StringBuilderPool.Shared.Rent(input);
 			Assert.Equal(input, sb.ToString());
-			StringBuilderPool.Return(sb);
+			StringBuilderPool.Shared.Return(sb);
 		}
 	}
 }
