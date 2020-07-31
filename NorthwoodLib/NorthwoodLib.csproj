@@ -2,9 +2,25 @@
 	<PropertyGroup>
 		<TargetFrameworks>net472;netstandard2.1</TargetFrameworks>
 		<LangVersion>7.3</LangVersion>
-		<RootNamespace>NorthwoodLib</RootNamespace>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<RootNamespace>NorthwoodLib</RootNamespace>
+
+		<AssemblyName>NorthwoodLib</AssemblyName>
+		<Product>NorthwoodLib</Product>
+		<PackageId>NorthwoodLib</PackageId>
+		<Description>NorthwoodLib</Description>
+		<Company>Hubert Moszka Northwood</Company>
+		<Authors>Hubert Moszka Northwood</Authors>
+		<Copyright>Hubert Moszka Northwood, 2020</Copyright>
 	</PropertyGroup>
+	
+	<PropertyGroup>
+		<!-- Disable automatic generation of version attribute -->
+		<GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+		<GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    </PropertyGroup>
+	
 	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
 			<_Parameter1>$(AssemblyName).Tests</_Parameter1>
