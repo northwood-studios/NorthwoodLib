@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.InteropServices;
 using NorthwoodLib.Logging;
 
@@ -10,6 +11,7 @@ namespace NorthwoodLib
 	/// </summary>
 	public static class OperatingSystem
 	{
+		// ReSharper disable InconsistentNaming
 #pragma warning disable IDE1006
 		/// <summary>
 		/// Managed version of https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw
@@ -31,14 +33,11 @@ namespace NorthwoodLib
 			internal readonly byte wProductType;
 			private readonly byte wReserved;
 		}
-#pragma warning restore IDE1006
 
 		private const string Ntdll = "ntdll";
 		private const string User32 = "user32";
 		private const string Kernel32 = "kernel32";
 
-		// ReSharper disable InconsistentNaming
-#pragma warning disable IDE1006
 		/// <summary>
 		/// Returns used Wine version https://wiki.winehq.org/Developer_FAQ#How_can_I_detect_Wine.3F
 		/// </summary>
@@ -50,24 +49,24 @@ namespace NorthwoodLib
 		/// Returns version information about the currently running operating system. https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-rtlgetversion
 		/// </summary>
 		/// <param name="lpVersionInformation"><see cref="OSVERSIONINFO"/> that contains the version information about the currently running operating system.</param>
-		/// <returns><see cref="RtlGetVersion"/> returns STATUS_SUCCESS.</returns>
-		[DllImport(Ntdll)]
-		private static extern uint RtlGetVersion(ref OSVERSIONINFO lpVersionInformation);
+		/// <returns><see cref="GetVersion"/> returns STATUS_SUCCESS.</returns>
+		[DllImport(Ntdll, EntryPoint = "RtlGetVersion", ExactSpelling = true)]
+		private static extern uint GetVersion(ref OSVERSIONINFO lpVersionInformation);
 
 		/// <summary>
 		/// Converts the specified NTSTATUS code to its equivalent system error code. https://docs.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-rtlntstatustodoserror
 		/// </summary>
 		/// <param name="Status">The NTSTATUS code to be converted.</param>
 		/// <returns>Corresponding system error code.</returns>
-		[DllImport(Ntdll)]
-		private static extern int RtlNtStatusToDosError(uint Status);
+		[DllImport(Ntdll, EntryPoint = "RtlNtStatusToDosError", ExactSpelling = true)]
+		private static extern int NtStatusToDosCode(uint Status);
 
 		/// <summary>
 		/// Retrieves the specified system metric or system configuration setting. https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
 		/// </summary>
 		/// <param name="nIndex">The system metric or configuration setting to be retrieved.</param>
 		/// <returns>Requested system metric or configuration setting.</returns>
-		[DllImport(User32)]
+		[DllImport(User32, EntryPoint = "GetSystemMetrics", ExactSpelling = true)]
 		private static extern int GetSystemMetrics(int nIndex);
 
 		/// <summary>
@@ -79,7 +78,7 @@ namespace NorthwoodLib
 		/// <param name="dwSpMinorVersion">The minor version number of the operating system service pack.</param>
 		/// <param name="pdwReturnedProductType">The product type.</param>
 		/// <returns>A nonzero value on success. This function fails if one of the input parameters is invalid.</returns>
-		[DllImport(Kernel32)]
+		[DllImport(Kernel32, EntryPoint = "GetProductInfo", ExactSpelling = true)]
 		private static extern bool GetProductInfo(uint idwOSMajorVersiond, uint dwOSMinorVersion, uint dwSpMajorVersion, uint dwSpMinorVersion, out uint pdwReturnedProductType);
 #pragma warning restore IDE1006
 		// ReSharper restore InconsistentNaming
@@ -101,6 +100,34 @@ namespace NorthwoodLib
 		{
 			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
+				const string osrelease = "/etc/os-release";
+				try
+				{
+					if (File.Exists(osrelease))
+						using (FileStream fs = new FileStream(osrelease, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+						{
+							using (StreamReader sr = new StreamReader(fs))
+							{
+								string line;
+								while ((line = sr.ReadLine()) != null)
+								{
+									line = line.Trim();
+									const string prettyname = "PRETTY_NAME=";
+									if (line.StartsWith(prettyname))
+									{
+										Version = Environment.OSVersion.Version;
+										VersionString = $"{line.Substring(prettyname.Length).Replace("\"", "").Trim()} {Environment.OSVersion.VersionString}".Trim();
+										UsesNativeData = true;
+										return;
+									}
+								}
+							}
+						}
+				}
+				catch (Exception ex)
+				{
+					PlatformSettings.Log($"Error while reading {osrelease}: {ex.Message}", LogType.Warning);
+				}
 				Version = Environment.OSVersion.Version;
 				VersionString = $"{Environment.OSVersion.VersionString} {Environment.OSVersion.ServicePack}".Trim();
 				UsesNativeData = false;
@@ -125,9 +152,9 @@ namespace NorthwoodLib
 			{
 				dwOSVersionInfoSize = (uint) Marshal.SizeOf<OSVERSIONINFO>()
 			};
-			uint status = RtlGetVersion(ref osVersionInfo);
+			uint status = GetVersion(ref osVersionInfo);
 			if (status != 0)
-				throw new Win32Exception(RtlNtStatusToDosError(status));
+				throw new Win32Exception(NtStatusToDosCode(status));
 
 			UsesNativeData = true;
 			Version = new Version((int) osVersionInfo.dwMajorVersion, (int) osVersionInfo.dwMinorVersion, (int) osVersionInfo.dwBuildNumber);

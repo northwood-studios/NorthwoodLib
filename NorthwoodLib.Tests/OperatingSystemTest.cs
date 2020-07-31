@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using NorthwoodLib.Logging;
@@ -28,7 +29,7 @@ namespace NorthwoodLib.Tests
 		[Fact]
 		public void UsesNativeDataTest()
 		{
-			Assert.Equal(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), OperatingSystem.UsesNativeData);
+			Assert.Equal(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || File.Exists("/etc/os-release"), OperatingSystem.UsesNativeData);
 		}
 
 		[Fact]
