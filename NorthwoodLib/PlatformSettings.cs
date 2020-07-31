@@ -9,6 +9,16 @@ namespace NorthwoodLib
 	public static class PlatformSettings
 	{
 		/// <summary>
+		/// Current library version
+		/// </summary>
+		internal const string VersionConst = "1.0.0";
+
+		/// <summary>
+		/// Returns the library version
+		/// </summary>
+		public static string Version => VersionConst;
+
+		/// <summary>
 		/// Logs all messages from the code
 		/// </summary>
 		public static event Action<string, LogType> Logged;
