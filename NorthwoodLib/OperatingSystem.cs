@@ -88,6 +88,10 @@ namespace NorthwoodLib
 		/// </summary>
 		public static readonly bool UsesNativeData;
 		/// <summary>
+		/// Informs if user uses Wine. User can hide Wine so don't rely on this for uses other than diagnostic usage
+		/// </summary>
+		public static readonly bool UsesWine;
+		/// <summary>
 		/// Used Operating System <see cref="System.Version"/>
 		/// </summary>
 		public static readonly Version Version;
@@ -141,11 +145,13 @@ namespace NorthwoodLib
 				if (!string.IsNullOrWhiteSpace(wineVersion))
 					VersionString += $"Wine {wineVersion} ";
 				PlatformSettings.Log($"Wine {wineVersion} detected!", LogType.Info);
+				UsesWine = true;
 			}
 			catch (Exception ex)
 			{
 				// not using wine, ignore
 				PlatformSettings.Log($"Wine not detected! {ex.Message}", LogType.Debug);
+				UsesWine = false;
 			}
 
 			OSVERSIONINFO osVersionInfo = new OSVERSIONINFO

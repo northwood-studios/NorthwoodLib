@@ -33,6 +33,21 @@ namespace NorthwoodLib.Tests
 		}
 
 		[Fact]
+		public void UsesWineTest()
+		{
+			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				Assert.False(OperatingSystem.UsesWine);
+				return;
+			}
+
+			if (OperatingSystem.UsesWine)
+				Assert.Contains("wine", OperatingSystem.VersionString, StringComparison.OrdinalIgnoreCase);
+			else
+				Assert.DoesNotContain("wine", OperatingSystem.VersionString, StringComparison.OrdinalIgnoreCase);
+		}
+
+		[Fact]
 		public void CorrectStringTest()
 		{
 			string version = OperatingSystem.VersionString;
