@@ -1,6 +1,7 @@
 using NorthwoodLib.Logging;
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -17,20 +18,52 @@ namespace NorthwoodLib
 		/// Managed version of https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw
 		/// </summary>
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-		private struct OSVERSIONINFO
+		internal struct OSVERSIONINFO
 		{
-			// The dwOSVersionInfoSize field must be set to Marshal.SizeOf<OSVERSIONINFO>()
+			/// <summary>
+			/// The marshalled size, in bytes, of an <see cref="OSVERSIONINFO"/> structure. This member must be set to <see cref="Marshal.SizeOf{OSVERSIONINFO}()"/> before the structure is used with <see cref="GetVersion"/>.
+			/// </summary>
 			internal uint dwOSVersionInfoSize;
-			internal readonly uint dwMajorVersion;
-			internal readonly uint dwMinorVersion;
-			internal readonly uint dwBuildNumber;
+			/// <summary>
+			/// The major version number of the operating system.
+			/// </summary>
+			internal uint dwMajorVersion;
+			/// <summary>
+			/// The minor version number of the operating system.
+			/// </summary>
+			internal uint dwMinorVersion;
+			/// <summary>
+			/// The build number of the operating system.
+			/// </summary>
+			internal uint dwBuildNumber;
+			/// <summary>
+			/// The operating system platform. For Win32 on NT-based operating systems, RtlGetVersion returns the value VER_PLATFORM_WIN32_NT.
+			/// </summary>
 			private readonly uint dwPlatformId;
+			/// <summary>
+			/// The service-pack version string.
+			/// </summary>
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
 			internal readonly string szCSDVersion;
+			/// <summary>
+			/// The major version number of the latest service pack installed on the system.
+			/// </summary>
 			internal readonly ushort wServicePackMajor;
+			/// <summary>
+			/// The minor version number of the latest service pack installed on the system.
+			/// </summary>
 			internal readonly ushort wServicePackMinor;
+			/// <summary>
+			/// The product suites available on the system.
+			/// </summary>
 			private readonly ushort wSuiteMask;
+			/// <summary>
+			/// The product type.
+			/// </summary>
 			internal readonly byte wProductType;
+			/// <summary>
+			/// Reserved for future use.
+			/// </summary>
 			private readonly byte wReserved;
 		}
 
@@ -117,6 +150,8 @@ namespace NorthwoodLib
 			if (status != 0)
 				throw new Win32Exception(NtStatusToDosCode(status));
 
+			CheckTrueVersion(ref osVersionInfo);
+
 			UsesNativeData = true;
 			Version = new Version((int) osVersionInfo.dwMajorVersion, (int) osVersionInfo.dwMinorVersion, (int) osVersionInfo.dwBuildNumber);
 
@@ -173,6 +208,40 @@ namespace NorthwoodLib
 
 			os = null;
 			return false;
+		}
+
+		/// <summary>
+		/// Makes sure the OS doesn't lie that it's Windows 8.
+		/// </summary>
+		/// <param name="version">Checked version</param>
+		internal static void CheckTrueVersion(ref OSVERSIONINFO version)
+		{
+			if (version.dwMajorVersion != 6 || version.dwMinorVersion != 2 || version.dwBuildNumber != 9200)
+				return;
+
+			try
+			{
+				string path = Path.Combine(Environment.SystemDirectory, "cmd.exe");
+				if (!File.Exists(path))
+					return;
+
+				FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(path);
+				if (fileVersionInfo.FileMajorPart == -1 && fileVersionInfo.FileMinorPart == -1 && fileVersionInfo.FileBuildPart == -1 ||
+					fileVersionInfo.FileMajorPart == 6 && fileVersionInfo.FileMinorPart == 2 && fileVersionInfo.FileBuildPart == 9200)
+					return;
+
+				// ReSharper disable HeapView.BoxingAllocation
+				PlatformSettings.Log($"Correcting system version from {version.dwMajorVersion}.{version.dwMinorVersion}.{version.dwBuildNumber} to {fileVersionInfo.FileMajorPart}.{fileVersionInfo.FileMinorPart}.{fileVersionInfo.FileBuildPart}", LogType.Info);
+				// ReSharper restore HeapView.BoxingAllocation
+
+				version.dwMajorVersion = (uint) fileVersionInfo.FileMajorPart;
+				version.dwMinorVersion = (uint) fileVersionInfo.FileMinorPart;
+				version.dwBuildNumber = (uint) fileVersionInfo.FileBuildPart;
+			}
+			catch (Exception ex)
+			{
+				PlatformSettings.Log($"Failed to correct Windows version! {ex.Message}", LogType.Warning);
+			}
 		}
 
 		private static string ProcessWindowsVersion(ref OSVERSIONINFO version)
