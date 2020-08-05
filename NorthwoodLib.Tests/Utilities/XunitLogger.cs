@@ -45,7 +45,7 @@ namespace NorthwoodLib.Tests.Utilities
 		{
 			_outputHelper?.WriteLine(message);
 			lock (_writeLock)
-				_writer?.WriteLine($"[{_className}] {message}\n{Environment.StackTrace.TruncateToLast(1000, '\n').Trim()}\n");
+				_writer?.WriteLine($"[{_className}] {message}\n{Environment.StackTrace.TruncateToLast(1000, '\n').TrimEnd()}\n");
 		}
 
 		/// <summary>
@@ -57,7 +57,7 @@ namespace NorthwoodLib.Tests.Utilities
 		{
 			_outputHelper?.WriteLine(format, args);
 			lock (_writeLock)
-				_writer?.WriteLine($"[{_className}] {string.Format(format, args)}\n{Environment.StackTrace.TruncateToLast(1000, '\n').Trim()}\n");
+				_writer?.WriteLine($"[{_className}] {string.Format(format, args)}\n{Environment.StackTrace.TruncateToLast(1000, '\n').TrimEnd()}\n");
 		}
 
 		private static void ReleaseUnmanagedResources()
