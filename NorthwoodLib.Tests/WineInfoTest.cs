@@ -1,7 +1,6 @@
 using NorthwoodLib.Logging;
 using NorthwoodLib.Tests.Utilities;
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Xunit;
@@ -9,11 +8,11 @@ using Xunit.Abstractions;
 
 namespace NorthwoodLib.Tests
 {
-	public class OperatingSystemTest : IDisposable
+	public class WineInfoTest : IDisposable
 	{
 		private readonly XunitLogger _logger;
 		private readonly int _currentThread;
-		public OperatingSystemTest(ITestOutputHelper output)
+		public WineInfoTest(ITestOutputHelper output)
 		{
 			_logger = new XunitLogger(output, GetType());
 			_currentThread = Thread.CurrentThread.ManagedThreadId;
@@ -27,34 +26,34 @@ namespace NorthwoodLib.Tests
 		}
 
 		[Fact]
-		public void UsesNativeDataTest()
+		public void NotWindowsTest()
 		{
-			Assert.Equal(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || File.Exists("/etc/os-release"), OperatingSystem.UsesNativeData);
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				return;
+			Assert.False(WineInfo.UsesWine);
+			Assert.Null(WineInfo.WineVersion);
 		}
 
 		[Fact]
 		public void UsesWineTest()
 		{
-#pragma warning disable 618
-			Assert.Equal(WineInfo.UsesWine, OperatingSystem.UsesWine);
-#pragma warning restore 618
+			Assert.Equal(WineInfo.UsesWine, WineInfo.WineVersion != null);
 		}
 
 		[Fact]
-		public void CorrectStringTest()
+		public void WinePatchesTest()
 		{
-			string version = OperatingSystem.VersionString;
-			_logger.WriteLine(version);
-			Assert.NotNull(version);
-			Assert.NotEqual("", version);
+			if (WineInfo.WinePatches == null)
+				return;
+			Assert.False(string.IsNullOrWhiteSpace(WineInfo.WinePatches));
 		}
 
 		[Fact]
-		public void CorrectVersionTest()
+		public void WineHostTest()
 		{
-			Version version = OperatingSystem.Version;
-			_logger.WriteLine(version.ToString());
-			Assert.NotEqual(new Version(0, 0, 0), version);
+			if (WineInfo.WineHost == null)
+				return;
+			Assert.False(string.IsNullOrWhiteSpace(WineInfo.WineHost));
 		}
 
 		private void Close()
@@ -69,7 +68,7 @@ namespace NorthwoodLib.Tests
 			GC.SuppressFinalize(this);
 		}
 
-		~OperatingSystemTest()
+		~WineInfoTest()
 		{
 			Close();
 		}

@@ -1,8 +1,8 @@
+using NorthwoodLib.Logging;
 using System;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
-using NorthwoodLib.Logging;
 
 namespace NorthwoodLib
 {
@@ -37,13 +37,6 @@ namespace NorthwoodLib
 		private const string Ntdll = "ntdll";
 		private const string User32 = "user32";
 		private const string Kernel32 = "kernel32";
-
-		/// <summary>
-		/// Returns used Wine version https://wiki.winehq.org/Developer_FAQ#How_can_I_detect_Wine.3F
-		/// </summary>
-		/// <returns>Used Wine version</returns>
-		[DllImport(Ntdll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "wine_get_version")]
-		private static extern string GetWineVersion();
 
 		/// <summary>
 		/// Returns version information about the currently running operating system. https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-rtlgetversion
@@ -90,6 +83,7 @@ namespace NorthwoodLib
 		/// <summary>
 		/// Informs if user uses Wine. User can hide Wine so don't rely on this for uses other than diagnostic usage
 		/// </summary>
+		[Obsolete("Use WineInfo.UsesWine instead")]
 		public static readonly bool UsesWine;
 		/// <summary>
 		/// Used Operating System <see cref="System.Version"/>
@@ -104,55 +98,16 @@ namespace NorthwoodLib
 		{
 			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
-				const string osrelease = "/etc/os-release";
-				try
-				{
-					if (File.Exists(osrelease))
-						using (FileStream fs = new FileStream(osrelease, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-						{
-							using (StreamReader sr = new StreamReader(fs))
-							{
-								string line;
-								while ((line = sr.ReadLine()) != null)
-								{
-									line = line.Trim();
-									const string prettyname = "PRETTY_NAME=";
-									if (line.StartsWith(prettyname))
-									{
-										Version = Environment.OSVersion.Version;
-										VersionString = $"{line.Substring(prettyname.Length).Replace("\"", "").Trim()} {Environment.OSVersion.VersionString}".Trim();
-										UsesNativeData = true;
-										return;
-									}
-								}
-							}
-						}
-				}
-				catch (Exception ex)
-				{
-					PlatformSettings.Log($"Error while reading {osrelease}: {ex.Message}", LogType.Warning);
-				}
 				Version = Environment.OSVersion.Version;
-				VersionString = $"{Environment.OSVersion.VersionString} {Environment.OSVersion.ServicePack}".Trim();
-				UsesNativeData = false;
+				UsesNativeData = TryGetOsRelease(out string os);
+				VersionString = UsesNativeData ? os : $"{Environment.OSVersion.VersionString} {Environment.OSVersion.ServicePack}".Trim();
 				return;
 			}
 
-			VersionString = "";
-			try
-			{
-				string wineVersion = GetWineVersion();
-				if (!string.IsNullOrWhiteSpace(wineVersion))
-					VersionString += $"Wine {wineVersion} ";
-				PlatformSettings.Log($"Wine {wineVersion} detected!", LogType.Info);
-				UsesWine = true;
-			}
-			catch (Exception ex)
-			{
-				// not using wine, ignore
-				PlatformSettings.Log($"Wine not detected! {ex.Message}", LogType.Debug);
-				UsesWine = false;
-			}
+			VersionString = WineInfo.UsesWine ? $"{WineInfo.WineVersion} " : "";
+#pragma warning disable 618
+			UsesWine = WineInfo.UsesWine;
+#pragma warning restore 618
 
 			OSVERSIONINFO osVersionInfo = new OSVERSIONINFO
 			{
@@ -185,6 +140,39 @@ namespace NorthwoodLib
 				VersionString += $" {systemBits}bit Process: {processBits}bit";
 			VersionString = VersionString.Trim();
 			// ReSharper restore HeapView.BoxingAllocation
+		}
+
+		private static bool TryGetOsRelease(out string os)
+		{
+			const string osrelease = "/etc/os-release";
+			try
+			{
+				if (File.Exists(osrelease))
+					using (FileStream fs = new FileStream(osrelease, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+					{
+						using (StreamReader sr = new StreamReader(fs))
+						{
+							string line;
+							while ((line = sr.ReadLine()) != null)
+							{
+								line = line.Trim();
+								const string prettyname = "PRETTY_NAME=";
+								if (line.StartsWith(prettyname))
+								{
+									os = $"{line.Substring(prettyname.Length).Replace("\"", "").Trim()} {Environment.OSVersion.VersionString}".Trim();
+									return true;
+								}
+							}
+						}
+					}
+			}
+			catch (Exception ex)
+			{
+				PlatformSettings.Log($"Error while reading {osrelease}: {ex.Message}", LogType.Warning);
+			}
+
+			os = null;
+			return false;
 		}
 
 		private static string ProcessWindowsVersion(ref OSVERSIONINFO version)
