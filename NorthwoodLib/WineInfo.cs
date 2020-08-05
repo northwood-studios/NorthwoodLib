@@ -75,6 +75,7 @@ namespace NorthwoodLib
 		{
 			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
+				// Wine will always report as Windows
 				UsesWine = false;
 				WineVersion = null;
 				return;
@@ -82,6 +83,7 @@ namespace NorthwoodLib
 
 			try
 			{
+				// this will fail on Windows or when user disables exporting wine_get_version
 				string wineVersion = GetWineVersion();
 
 				if (string.IsNullOrWhiteSpace(wineVersion))
@@ -147,6 +149,7 @@ namespace NorthwoodLib
 			patches = null;
 			try
 			{
+				// disabled since Wine 5.9, should still work on older versions though
 				WinePatch* patch = GetWinePatches();
 
 				if (patch == null)
