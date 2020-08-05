@@ -55,6 +55,9 @@ namespace NorthwoodLib
 			GC.SuppressFinalize(this);
 		}
 
+		/// <summary>
+		/// Frees allocated memory
+		/// </summary>
 		~NativeMemory()
 		{
 			Free();

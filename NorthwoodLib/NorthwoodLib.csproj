@@ -4,6 +4,7 @@
 		<LangVersion>7.3</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace>NorthwoodLib</RootNamespace>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 
 		<AssemblyName>NorthwoodLib</AssemblyName>
 		<Product>NorthwoodLib</Product>
@@ -28,6 +29,25 @@
 	</ItemGroup>
 	
 	<ItemGroup>
+		<PackageReference Include="System.Buffers" Version="4.5.1" />
 		<PackageReference Include="System.Memory" Version="4.5.4" />
+		<PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.1" />
 	</ItemGroup>
+	
+	<Target Name="CopyReferenceFilesBuild" BeforeTargets="Build">
+		<ItemGroup>
+			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" />
+		</ItemGroup>
+		<Message Text="Copying reference files to $(OutputPath)" Importance="High" />
+		<Copy SourceFiles="@(ReferenceFiles)" DestinationFolder="$(OutputPath)" Condition="Exists('%(RootDir)%(Directory)%(Filename)%(Extension)')" />
+	</Target>
+	
+	<Target Name="CopyReferenceFilesPublish" BeforeTargets="Publish">
+		<ItemGroup>
+			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" />
+		</ItemGroup>
+		<Message Text="Copying reference files to $(PublishDir)" Importance="High" />
+		<Copy SourceFiles="@(ReferenceFiles)" DestinationFolder="$(PublishDir)" Condition="Exists('%(RootDir)%(Directory)%(Filename)%(Extension)')" />
+	</Target>
 </Project>
