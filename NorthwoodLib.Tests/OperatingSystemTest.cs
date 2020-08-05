@@ -57,6 +57,21 @@ namespace NorthwoodLib.Tests
 			Assert.NotEqual(new Version(0, 0, 0), version);
 		}
 
+		[Fact]
+		public void TrueVersionTest()
+		{
+			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				return;
+
+			Version version = OperatingSystem.Version;
+			OperatingSystem.OSVERSIONINFO info = new OperatingSystem.OSVERSIONINFO
+			{ dwMajorVersion = 6, dwMinorVersion = 2, dwBuildNumber = 9200 };
+			OperatingSystem.CheckTrueVersion(ref info);
+			Assert.Equal(version.Major, (int) info.dwMajorVersion);
+			Assert.Equal(version.Minor, (int) info.dwMinorVersion);
+			Assert.Equal(version.Build, (int) info.dwBuildNumber);
+		}
+
 		private void Close()
 		{
 			PlatformSettings.Logged -= Log;
