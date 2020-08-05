@@ -81,6 +81,11 @@ namespace NorthwoodLib
 		/// </summary>
 		public static readonly bool UsesNativeData;
 		/// <summary>
+		/// Informs if user uses Wine. User can hide Wine so don't rely on this for uses other than diagnostic usage
+		/// </summary>
+		[Obsolete("Use WineInfo.UsesWine instead")]
+		public static readonly bool UsesWine;
+		/// <summary>
 		/// Used Operating System <see cref="System.Version"/>
 		/// </summary>
 		public static readonly Version Version;
@@ -100,6 +105,9 @@ namespace NorthwoodLib
 			}
 
 			VersionString = WineInfo.UsesWine ? $"{WineInfo.WineVersion} " : "";
+#pragma warning disable 618
+			UsesWine = WineInfo.UsesWine;
+#pragma warning restore 618
 
 			OSVERSIONINFO osVersionInfo = new OSVERSIONINFO
 			{

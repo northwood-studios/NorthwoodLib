@@ -33,6 +33,14 @@ namespace NorthwoodLib.Tests
 		}
 
 		[Fact]
+		public void UsesWineTest()
+		{
+#pragma warning disable 618
+			Assert.Equal(WineInfo.UsesWine, OperatingSystem.UsesWine);
+#pragma warning restore 618
+		}
+
+		[Fact]
 		public void CorrectStringTest()
 		{
 			string version = OperatingSystem.VersionString;
