@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>net472;netstandard2.1</TargetFrameworks>
 		<LangVersion>7.3</LangVersion>
@@ -25,5 +25,9 @@
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
 			<_Parameter1>$(AssemblyName).Tests</_Parameter1>
 		</AssemblyAttribute>
+	</ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="System.Memory" Version="4.5.4" />
 	</ItemGroup>
 </Project>

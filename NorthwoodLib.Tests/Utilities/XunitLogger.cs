@@ -7,7 +7,7 @@ namespace NorthwoodLib.Tests.Utilities
 	/// <summary>
 	/// Logs data to XUnit output and log file set with environment variable xunitlogpath
 	/// </summary>
-	internal sealed class XunitLogger : ITestOutputHelper, IDisposable
+	public sealed class XunitLogger : ITestOutputHelper, IDisposable
 	{
 		private readonly ITestOutputHelper _outputHelper;
 		private readonly string _className;
@@ -45,7 +45,7 @@ namespace NorthwoodLib.Tests.Utilities
 		{
 			_outputHelper?.WriteLine(message);
 			lock (_writeLock)
-				_writer?.WriteLine($"[{_className}] {message}\n{TruncateToLastNewline(Environment.StackTrace, 1000)}\n");
+				_writer?.WriteLine($"[{_className}] {message}\n{Environment.StackTrace.TruncateToLast(1000, '\n').Trim()}\n");
 		}
 
 		/// <summary>
@@ -57,12 +57,7 @@ namespace NorthwoodLib.Tests.Utilities
 		{
 			_outputHelper?.WriteLine(format, args);
 			lock (_writeLock)
-				_writer?.WriteLine($"[{_className}] {string.Format(format, args)}\n{TruncateToLastNewline(Environment.StackTrace, 1000)}\n");
-		}
-
-		private static string TruncateToLastNewline(string text, int maxSize)
-		{
-			return text.Length <= maxSize ? text : text.Substring(0, text.LastIndexOf('\n', maxSize - 1, maxSize));
+				_writer?.WriteLine($"[{_className}] {string.Format(format, args)}\n{Environment.StackTrace.TruncateToLast(1000, '\n').Trim()}\n");
 		}
 
 		private static void ReleaseUnmanagedResources()
