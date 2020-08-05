@@ -31,4 +31,20 @@
 	<ItemGroup>
 		<PackageReference Include="System.Memory" Version="4.5.4" />
 	</ItemGroup>
+	
+	<Target Name="CopyReferenceFilesBuild" BeforeTargets="Build">
+		<ItemGroup>
+			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" />
+		</ItemGroup>
+		<Message Text="Copying reference files to $(OutputPath)" Importance="High" />
+		<Copy SourceFiles="@(ReferenceFiles)" DestinationFolder="$(OutputPath)" Condition="Exists('%(RootDir)%(Directory)%(Filename)%(Extension)')" />
+	</Target>
+	
+	<Target Name="CopyReferenceFilesPublish" BeforeTargets="Publish">
+		<ItemGroup>
+			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" />
+		</ItemGroup>
+		<Message Text="Copying reference files to $(PublishDir)" Importance="High" />
+		<Copy SourceFiles="@(ReferenceFiles)" DestinationFolder="$(PublishDir)" Condition="Exists('%(RootDir)%(Directory)%(Filename)%(Extension)')" />
+	</Target>
 </Project>
