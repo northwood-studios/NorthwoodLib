@@ -9,7 +9,7 @@ namespace NorthwoodLib.Pools
 		/// <summary>
 		/// Returns a pooled instance of <typeparamref name="T"/>
 		/// </summary>
-		/// <returns><typeparamref name="T"/>from the pool</returns>
+		/// <returns><typeparamref name="T"/> from the pool</returns>
 		T Rent();
 		/// <summary>
 		/// Returns a <typeparamref name="T"/> to the pool
