@@ -15,7 +15,7 @@ namespace NorthwoodLib
 		// ReSharper disable InconsistentNaming
 #pragma warning disable IDE1006
 		/// <summary>
-		/// Managed version of https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw
+		/// Managed version of <see href="https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw"/>
 		/// </summary>
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 		internal struct OSVERSIONINFO
@@ -72,7 +72,7 @@ namespace NorthwoodLib
 		private const string Kernel32 = "kernel32";
 
 		/// <summary>
-		/// Returns version information about the currently running operating system. https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-rtlgetversion
+		/// Returns version information about the currently running operating system. <see href="https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-rtlgetversion"/>
 		/// </summary>
 		/// <param name="lpVersionInformation"><see cref="OSVERSIONINFO"/> that contains the version information about the currently running operating system.</param>
 		/// <returns><see cref="GetVersion"/> returns STATUS_SUCCESS.</returns>
@@ -80,7 +80,7 @@ namespace NorthwoodLib
 		private static extern uint GetVersion(ref OSVERSIONINFO lpVersionInformation);
 
 		/// <summary>
-		/// Converts the specified NTSTATUS code to its equivalent system error code. https://docs.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-rtlntstatustodoserror
+		/// Converts the specified NTSTATUS code to its equivalent system error code. <see href="https://docs.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-rtlntstatustodoserror"/>
 		/// </summary>
 		/// <param name="Status">The NTSTATUS code to be converted.</param>
 		/// <returns>Corresponding system error code.</returns>
@@ -88,7 +88,7 @@ namespace NorthwoodLib
 		private static extern int NtStatusToDosCode(uint Status);
 
 		/// <summary>
-		/// Retrieves the specified system metric or system configuration setting. https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
+		/// Retrieves the specified system metric or system configuration setting. <see href="https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics"/>
 		/// </summary>
 		/// <param name="nIndex">The system metric or configuration setting to be retrieved.</param>
 		/// <returns>Requested system metric or configuration setting.</returns>
@@ -96,7 +96,7 @@ namespace NorthwoodLib
 		private static extern int GetSystemMetrics(int nIndex);
 
 		/// <summary>
-		/// Retrieves the product type for the operating system on the local computer, and maps the type to the product types supported by the specified operating system. https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getproductinfo
+		/// Retrieves the product type for the operating system on the local computer, and maps the type to the product types supported by the specified operating system. <see href="https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getproductinfo"/>
 		/// </summary>
 		/// <param name="idwOSMajorVersiond">The major version number of the operating system.</param>
 		/// <param name="dwOSMinorVersion">The minor version number of the operating system.</param>
@@ -177,8 +177,14 @@ namespace NorthwoodLib
 			// ReSharper restore HeapView.BoxingAllocation
 		}
 
+		/// <summary>
+		/// Checks /etc/os-release for Linux distribution info
+		/// </summary>
+		/// <param name="os">Used Linux distribution</param>
+		/// <returns>True if operation was successful</returns>
 		private static bool TryGetOsRelease(out string os)
 		{
+			// linux distributions store info about themselves here
 			const string osrelease = "/etc/os-release";
 			try
 			{
@@ -216,16 +222,20 @@ namespace NorthwoodLib
 		/// <param name="version">Checked version</param>
 		internal static void CheckTrueVersion(ref OSVERSIONINFO version)
 		{
+			// 6.2.9200 is Windows 8, Windows 8.1 and 10 sometimes like to identify themselves as it
 			if (version.dwMajorVersion != 6 || version.dwMinorVersion != 2 || version.dwBuildNumber != 9200)
 				return;
 
 			try
 			{
+				// use a system file to obtain the true version
 				string path = Path.Combine(Environment.SystemDirectory, "cmd.exe");
 				if (!File.Exists(path))
 					return;
 
 				FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(path);
+
+				// ignore when file doesn't have a version (-1) or if it's really Windows 8 (6.2.9200)
 				if (fileVersionInfo.FileMajorPart == -1 && fileVersionInfo.FileMinorPart == -1 && fileVersionInfo.FileBuildPart == -1 ||
 					fileVersionInfo.FileMajorPart == 6 && fileVersionInfo.FileMinorPart == 2 && fileVersionInfo.FileBuildPart == 9200)
 					return;
