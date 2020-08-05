@@ -15,12 +15,12 @@ namespace NorthwoodLib
 		private static readonly Regex TagRegex = new Regex("<.*?>", RegexOptions.Compiled);
 
 		/// <summary>
-		/// Truncates a string to the last occurance of <see cref="character"/> within <see cref="maxSize"/> characters if it's longer than it
+		/// Truncates a string to the last occurance of <see paramref="character"/> within <see paramref="maxSize"/> characters if it's longer than it
 		/// </summary>
 		/// <param name="text">Processed text</param>
 		/// <param name="maxSize">Maximum size</param>
 		/// <param name="character">Checked character</param>
-		/// <returns>Truncated <see cref="text"/></returns>
+		/// <returns>Truncated <see paramref="text"/></returns>
 		public static string TruncateToLast(this string text, int maxSize, char character)
 		{
 			int index = text.LastIndexOf(character, maxSize - 1, maxSize);
@@ -28,13 +28,13 @@ namespace NorthwoodLib
 		}
 
 		/// <summary>
-		/// Truncates a string to the last occurance of <see cref="str"/> within <see cref="maxSize"/> characters if it's longer than it
+		/// Truncates a string to the last occurance of <see paramref="str"/> within <see paramref="maxSize"/> characters if it's longer than it
 		/// </summary>
 		/// <param name="text">Processed text</param>
 		/// <param name="maxSize">Maximum size</param>
 		/// <param name="str">Checked string</param>
 		/// <param name="comparison">String comparison</param>
-		/// <returns>Truncated <see cref="text"/></returns>
+		/// <returns>Truncated <see paramref="text"/></returns>
 		public static string TruncateToLast(this string text, int maxSize, string str, StringComparison comparison = StringComparison.Ordinal)
 		{
 			int index = text.LastIndexOf(str, maxSize - 1, maxSize, comparison);
@@ -45,7 +45,7 @@ namespace NorthwoodLib
 		/// Converts a text to Base64 encoded UTF8
 		/// </summary>
 		/// <param name="plainText">Processed text</param>
-		/// <returns>Base64 encoded UTF8 of <see cref="plainText"/></returns>
+		/// <returns>Base64 encoded UTF8 of <see paramref="plainText"/></returns>
 		public static string Base64Encode(string plainText)
 		{
 			byte[] buffer = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetMaxByteCount(plainText.Length));
@@ -83,7 +83,7 @@ namespace NorthwoodLib
 		/// <param name="s">Checked string</param>
 		/// <param name="value">The string to seek.</param>
 		/// <param name="comparison">One of the enumeration values that specifies the rules to use in the comparison.</param>
-		/// <returns><see langword="true"/> if the <see cref="value"/> occurs within this string, or if <see cref="value"/> is the empty string (""); otherwise, <see langword="false"/>.</returns>
+		/// <returns><see langword="true"/> if the <see paramref="value"/> occurs within this string, or if <see paramref="value"/> is the empty string (""); otherwise, <see langword="false"/>.</returns>
 		public static bool Contains(this string s, string value, StringComparison comparison)
 		{
 			return s.IndexOf(value, comparison) >= 0;
