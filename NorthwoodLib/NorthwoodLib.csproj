@@ -4,6 +4,7 @@
 		<LangVersion>7.3</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace>NorthwoodLib</RootNamespace>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 
 		<AssemblyName>NorthwoodLib</AssemblyName>
 		<Product>NorthwoodLib</Product>
