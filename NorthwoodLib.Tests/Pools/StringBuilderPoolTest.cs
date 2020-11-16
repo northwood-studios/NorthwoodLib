@@ -37,5 +37,15 @@ namespace NorthwoodLib.Tests.Pools
 			Assert.Equal(input, sb.ToString());
 			StringBuilderPool.Shared.Return(sb);
 		}
+
+		[Theory]
+		[InlineData("")]
+		[InlineData("test 1")]
+		[InlineData("test \n \0 \r")]
+		public void ToStringReturnTest(string input)
+		{
+			StringBuilder sb = StringBuilderPool.Shared.Rent(input);
+			Assert.Equal(input, StringBuilderPool.Shared.ToStringReturn(sb));
+		}
 	}
 }
