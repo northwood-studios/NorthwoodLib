@@ -67,5 +67,18 @@ namespace NorthwoodLib.Pools
 			stringBuilder.Clear();
 			_pool.Enqueue(stringBuilder);
 		}
+
+		/// <summary>
+		/// Returns the content of a <see cref="StringBuilder"/> and returns it to the pool
+		/// </summary>
+		/// <param name="stringBuilder">Returned <see cref="StringBuilder"/></param>
+		/// <returns>The content of the <see cref="StringBuilder"/></returns>
+		public string ToStringReturn(StringBuilder stringBuilder)
+		{
+			string value = stringBuilder.ToString();
+			stringBuilder.Clear();
+			_pool.Enqueue(stringBuilder);
+			return value;
+		}
 	}
 }
