@@ -18,24 +18,24 @@ namespace NorthwoodLib
 		/// Managed version of <see href="https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw"/>
 		/// </summary>
 		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-		internal struct OSVERSIONINFO
+		private struct OSVERSIONINFO
 		{
 			/// <summary>
 			/// The marshalled size, in bytes, of an <see cref="OSVERSIONINFO"/> structure. This member must be set to <see cref="Marshal.SizeOf{OSVERSIONINFO}()"/> before the structure is used with <see cref="GetVersion"/>.
 			/// </summary>
-			internal uint dwOSVersionInfoSize;
+			public uint dwOSVersionInfoSize;
 			/// <summary>
 			/// The major version number of the operating system.
 			/// </summary>
-			internal uint dwMajorVersion;
+			public readonly uint dwMajorVersion;
 			/// <summary>
 			/// The minor version number of the operating system.
 			/// </summary>
-			internal uint dwMinorVersion;
+			public readonly uint dwMinorVersion;
 			/// <summary>
 			/// The build number of the operating system.
 			/// </summary>
-			internal uint dwBuildNumber;
+			public readonly uint dwBuildNumber;
 			/// <summary>
 			/// The operating system platform. For Win32 on NT-based operating systems, RtlGetVersion returns the value VER_PLATFORM_WIN32_NT.
 			/// </summary>
@@ -44,15 +44,15 @@ namespace NorthwoodLib
 			/// The service-pack version string.
 			/// </summary>
 			[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-			internal readonly string szCSDVersion;
+			public readonly string szCSDVersion;
 			/// <summary>
 			/// The major version number of the latest service pack installed on the system.
 			/// </summary>
-			internal readonly ushort wServicePackMajor;
+			public readonly ushort wServicePackMajor;
 			/// <summary>
 			/// The minor version number of the latest service pack installed on the system.
 			/// </summary>
-			internal readonly ushort wServicePackMinor;
+			public readonly ushort wServicePackMinor;
 			/// <summary>
 			/// The product suites available on the system.
 			/// </summary>
@@ -60,7 +60,7 @@ namespace NorthwoodLib
 			/// <summary>
 			/// The product type.
 			/// </summary>
-			internal readonly byte wProductType;
+			public readonly byte wProductType;
 			/// <summary>
 			/// Reserved for future use.
 			/// </summary>
@@ -76,8 +76,16 @@ namespace NorthwoodLib
 		/// </summary>
 		/// <param name="lpVersionInformation"><see cref="OSVERSIONINFO"/> that contains the version information about the currently running operating system.</param>
 		/// <returns><see cref="GetVersion"/> returns STATUS_SUCCESS.</returns>
-		[DllImport(Ntdll, EntryPoint = "RtlGetVersion", ExactSpelling = true)]
+		[DllImport(Ntdll, EntryPoint = "RtlGetVersion", CharSet = CharSet.Unicode, ExactSpelling = true)]
 		private static extern uint GetVersion(ref OSVERSIONINFO lpVersionInformation);
+
+		/// <summary>
+		/// Returns version information about the currently running operating system. <see href="https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getversionexw"/>
+		/// </summary>
+		/// <param name="lpVersionInformation"><see cref="OSVERSIONINFO"/> that contains the version information about the currently running operating system.</param>
+		/// <returns>True on success</returns>
+		[DllImport(Kernel32, EntryPoint = "GetVersionExW", CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = true)]
+		private static extern bool GetVersionFallback(ref OSVERSIONINFO lpVersionInformation);
 
 		/// <summary>
 		/// Converts the specified NTSTATUS code to its equivalent system error code. <see href="https://docs.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-rtlntstatustodoserror"/>
@@ -129,67 +137,183 @@ namespace NorthwoodLib
 
 		static OperatingSystem()
 		{
-			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-				Version = Environment.OSVersion.Version;
-				UsesNativeData = TryGetOsRelease(out string os);
-				VersionString = UsesNativeData ? os : $"{Environment.OSVersion.VersionString} {Environment.OSVersion.ServicePack}".Trim();
-				return;
-			}
-
-			VersionString = WineInfo.UsesWine ? $"{WineInfo.WineVersion} " : "";
+			UsesNativeData = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? TryGetWindowsVersion(out Version version, out string os) : TryGetUnixOs(out version, out os);
+			Version = UsesNativeData ? version : Environment.OSVersion.Version;
+			VersionString = UsesNativeData ? os : $"{Environment.OSVersion.VersionString} {Environment.OSVersion.ServicePack}".Trim();
 #pragma warning disable 618
 			UsesWine = WineInfo.UsesWine;
 #pragma warning restore 618
+		}
 
-			OSVERSIONINFO osVersionInfo = new OSVERSIONINFO
+		private static bool TryGetWindowsVersion(out Version version, out string name)
+		{
+			name = WineInfo.UsesWine ? $"{WineInfo.WineVersion} " : "";
+			version = null;
+
+			bool server = false;
+			string servicePack = null;
+			Version servicePackVersion = null;
+
+			try
 			{
-				dwOSVersionInfoSize = (uint) Marshal.SizeOf<OSVERSIONINFO>()
-			};
-			uint status = GetVersion(ref osVersionInfo);
-			if (status != 0)
-				throw new Win32Exception(NtStatusToDosCode(status));
+				OSVERSIONINFO osVersionInfo = new OSVERSIONINFO
+				{
+					dwOSVersionInfoSize = (uint) Marshal.SizeOf<OSVERSIONINFO>()
+				};
+				uint status = GetVersion(ref osVersionInfo);
+				if (status != 0)
+					throw new Win32Exception(NtStatusToDosCode(status));
 
-			CheckTrueVersion(ref osVersionInfo);
+				version = new Version((int) osVersionInfo.dwMajorVersion, (int) osVersionInfo.dwMinorVersion, (int) osVersionInfo.dwBuildNumber);
+				// from https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw
+				server = osVersionInfo.wProductType != 1;
+				servicePack = osVersionInfo.szCSDVersion;
+				servicePackVersion = new Version(osVersionInfo.wServicePackMajor, osVersionInfo.wServicePackMinor);
+			}
+			catch (Exception ex)
+			{
+				PlatformSettings.Log($"Failed to get Windows version! {ex.Message}", LogType.Warning);
+			}
 
-			UsesNativeData = true;
-			Version = new Version((int) osVersionInfo.dwMajorVersion, (int) osVersionInfo.dwMinorVersion, (int) osVersionInfo.dwBuildNumber);
+			if (!IsValidWindowsVersion(version))
+				try
+				{
+					OSVERSIONINFO osVersionInfo = new OSVERSIONINFO
+					{
+						dwOSVersionInfoSize = (uint) Marshal.SizeOf<OSVERSIONINFO>()
+					};
+					if (!GetVersionFallback(ref osVersionInfo))
+						throw new Win32Exception();
+
+					version = new Version((int) osVersionInfo.dwMajorVersion, (int) osVersionInfo.dwMinorVersion, (int) osVersionInfo.dwBuildNumber);
+					// from https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw
+					server = osVersionInfo.wProductType != 1;
+					servicePack = osVersionInfo.szCSDVersion;
+					servicePackVersion = new Version(osVersionInfo.wServicePackMajor, osVersionInfo.wServicePackMinor);
+				}
+				catch (Exception ex)
+				{
+					PlatformSettings.Log($"Failed to correct Windows version with GetVersionExW! {ex.Message}", LogType.Warning);
+				}
+
+			try
+			{
+				if (!IsValidWindowsVersion(version) && TryCheckWindowsFileVersion(out Version fileVersion))
+				{
+					// ReSharper disable HeapView.BoxingAllocation
+					PlatformSettings.Log($"Correcting system version using files from {version?.Major ?? 0}.{version?.Minor ?? 0}.{version?.Build ?? 0} to {fileVersion.Major}.{fileVersion.Minor}.{fileVersion.Build}", LogType.Warning);
+					// ReSharper restore HeapView.BoxingAllocation
+					version = fileVersion;
+				}
+			}
+			catch (Exception ex)
+			{
+				PlatformSettings.Log($"Failed to correct Windows version using files! {ex.Message}", LogType.Warning);
+			}
+
+			if (!IsValidWindowsVersion(version))
+				version = Environment.OSVersion.Version;
+
+			if (servicePack == null)
+				servicePack = Environment.OSVersion.ServicePack;
+
+			if (servicePackVersion == null)
+				switch (Environment.OSVersion.ServicePack)
+				{
+					case "Service Pack 1":
+						servicePackVersion = new Version(1, 0);
+						break;
+					case "Service Pack 2":
+						servicePackVersion = new Version(2, 0);
+						break;
+					case "Service Pack 3":
+						servicePackVersion = new Version(3, 0);
+						break;
+				}
 
 			// ReSharper disable HeapView.BoxingAllocation
-			// pass by ref to avoid huge struct copiesk
-			VersionString += $"Windows {ProcessWindowsVersion(ref osVersionInfo)}";
-			string product = GetProductInfo(ref osVersionInfo);
+			name += $"Windows {ProcessWindowsVersion(version, server)}";
+			string product = GetProductInfo(version, servicePackVersion);
 			if (!string.IsNullOrWhiteSpace(product))
-				VersionString += $" {product}";
-			VersionString += $" {osVersionInfo.dwMajorVersion}.{osVersionInfo.dwMinorVersion}.{osVersionInfo.dwBuildNumber}";
-			if (osVersionInfo.wServicePackMajor != 0 || osVersionInfo.wServicePackMinor != 0)
-				VersionString += $"-{osVersionInfo.wServicePackMajor}.{osVersionInfo.wServicePackMinor}";
-			if (!string.IsNullOrWhiteSpace(osVersionInfo.szCSDVersion))
-				VersionString += $" {osVersionInfo.szCSDVersion}";
+				name += $" {product}";
+			name += $" {version?.Major ?? 0}.{version?.Minor ?? 0}.{version?.Build ?? 0}";
+			if (servicePackVersion != null && (servicePackVersion.Major != 0 || servicePackVersion.Minor != 0))
+				name += $"-{servicePackVersion.Major}.{servicePackVersion.Minor}";
+			if (!string.IsNullOrWhiteSpace(servicePack))
+				name += $" {servicePack}";
 
 			int systemBits = Environment.Is64BitOperatingSystem ? 64 : 32;
 			int processBits = IntPtr.Size * 8;
 			if (systemBits == processBits)
-				VersionString += $" {systemBits}bit";
+				name += $" {systemBits}bit";
 			else
-				VersionString += $" {systemBits}bit Process: {processBits}bit";
-			VersionString = VersionString.Trim();
+				name += $" {systemBits}bit Process: {processBits}bit";
+			name = name.Trim();
 			// ReSharper restore HeapView.BoxingAllocation
+			return true;
+		}
+
+		/// <summary>
+		/// Fetches the Windows version from system files
+		/// </summary>
+		/// <param name="version">System version</param>
+		/// <returns>True if successful, false otherwise</returns>
+		internal static bool TryCheckWindowsFileVersion(out Version version)
+		{
+			foreach (string file in new[] { "cmd.exe", "conhost.exe", "dxdiag.exe", "msinfo32.exe", "msconfig.exe", "mspaint.exe", "notepad.exe", "winver.exe" })
+			{
+				FileVersionInfo fileVersionInfo;
+				try
+				{
+					// use a system file to obtain the true version
+					string path = Path.Combine(Environment.SystemDirectory, file);
+					if (!File.Exists(path))
+						continue;
+					fileVersionInfo = FileVersionInfo.GetVersionInfo(path);
+				}
+				catch (Exception ex)
+				{
+					PlatformSettings.Log($"Failed to get the version of {file}! {ex.Message}", LogType.Warning);
+					continue;
+				}
+
+				version = new Version(fileVersionInfo.FileMajorPart, fileVersionInfo.FileMinorPart, fileVersionInfo.FileBuildPart);
+				if (!IsValidWindowsVersion(version))
+					version = new Version(fileVersionInfo.ProductMajorPart, fileVersionInfo.ProductMinorPart, fileVersionInfo.ProductBuildPart);
+				if (IsValidWindowsVersion(version))
+					return true;
+			}
+
+			version = null;
+			return false;
+		}
+
+		private static bool IsValidWindowsVersion(Version version)
+		{
+			return version != null && IsValidWindowsVersion(version.Major, version.Minor);
+		}
+
+		private static bool IsValidWindowsVersion(int major, int minor)
+		{
+			// 6.2 is Windows 8, Windows 8.1 and 10 sometimes like to identify themselves as it
+			return major > 0 && minor >= 0 && !(major == 6 && minor == 2);
 		}
 
 		/// <summary>
 		/// Checks /etc/os-release for Linux distribution info
 		/// </summary>
-		/// <param name="os">Used Linux distribution</param>
+		/// <param name="version">OS version</param>
+		/// <param name="name">Used Linux distribution</param>
 		/// <returns>True if operation was successful</returns>
-		private static bool TryGetOsRelease(out string os)
+		private static bool TryGetUnixOs(out Version version, out string name)
 		{
+			version = Environment.OSVersion.Version;
 			// linux distributions store info about themselves here
 			const string osrelease = "/etc/os-release";
 			try
 			{
 				if (File.Exists(osrelease))
-					using (FileStream fs = new FileStream(osrelease, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+					using (FileStream fs = new FileStream(osrelease, FileMode.Open, FileAccess.Read, FileShare.Read))
 					{
 						using (StreamReader sr = new StreamReader(fs))
 						{
@@ -200,7 +324,7 @@ namespace NorthwoodLib
 								const string prettyname = "PRETTY_NAME=";
 								if (line.StartsWith(prettyname))
 								{
-									os = $"{line.Substring(prettyname.Length).Replace("\"", "").Trim()} {Environment.OSVersion.VersionString}".Trim();
+									name = $"{line.Substring(prettyname.Length).Replace("\"", "").Trim()} {Environment.OSVersion.VersionString}".Trim();
 									return true;
 								}
 							}
@@ -212,78 +336,76 @@ namespace NorthwoodLib
 				PlatformSettings.Log($"Error while reading {osrelease}: {ex.Message}", LogType.Warning);
 			}
 
-			os = null;
+			name = null;
 			return false;
 		}
 
-		/// <summary>
-		/// Makes sure the OS doesn't lie that it's Windows 8.
-		/// </summary>
-		/// <param name="version">Checked version</param>
-		internal static void CheckTrueVersion(ref OSVERSIONINFO version)
+		private static string ProcessWindowsVersion(Version version, bool server)
 		{
-			// 6.2.9200 is Windows 8, Windows 8.1 and 10 sometimes like to identify themselves as it
-			if (version.dwMajorVersion != 6 || version.dwMinorVersion != 2 || version.dwBuildNumber != 9200)
-				return;
-
-			try
-			{
-				// use a system file to obtain the true version
-				string path = Path.Combine(Environment.SystemDirectory, "cmd.exe");
-				if (!File.Exists(path))
-					return;
-
-				FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(path);
-
-				// ignore when file doesn't have a version (-1) or if it's really Windows 8 (6.2.9200)
-				if (fileVersionInfo.FileMajorPart == -1 && fileVersionInfo.FileMinorPart == -1 && fileVersionInfo.FileBuildPart == -1 ||
-					fileVersionInfo.FileMajorPart == 6 && fileVersionInfo.FileMinorPart == 2 && fileVersionInfo.FileBuildPart == 9200)
-					return;
-
-				// ReSharper disable HeapView.BoxingAllocation
-				PlatformSettings.Log($"Correcting system version from {version.dwMajorVersion}.{version.dwMinorVersion}.{version.dwBuildNumber} to {fileVersionInfo.FileMajorPart}.{fileVersionInfo.FileMinorPart}.{fileVersionInfo.FileBuildPart}", LogType.Info);
-				// ReSharper restore HeapView.BoxingAllocation
-
-				version.dwMajorVersion = (uint) fileVersionInfo.FileMajorPart;
-				version.dwMinorVersion = (uint) fileVersionInfo.FileMinorPart;
-				version.dwBuildNumber = (uint) fileVersionInfo.FileBuildPart;
-			}
-			catch (Exception ex)
-			{
-				PlatformSettings.Log($"Failed to correct Windows version! {ex.Message}", LogType.Warning);
-			}
-		}
-
-		private static string ProcessWindowsVersion(ref OSVERSIONINFO version)
-		{
-			// ReSharper disable once InconsistentNaming
-#pragma warning disable IDE1006
-			const byte VER_NT_WORKSTATION = 1;
-#pragma warning restore IDE1006
-			// from https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw
-			if (version.wProductType == VER_NT_WORKSTATION)
-				switch (version.dwMajorVersion)
+			if (server)
+				switch (version.Major)
 				{
 					case 10:
-						switch (version.dwMinorVersion)
+						switch (version.Minor)
 						{
-							case 0 when version.dwBuildNumber == 10240: return "10 1507";
-							case 0 when version.dwBuildNumber == 10586: return "10 1511";
-							case 0 when version.dwBuildNumber == 14393: return "10 1607";
-							case 0 when version.dwBuildNumber == 15063: return "10 1703";
-							case 0 when version.dwBuildNumber == 16299: return "10 1709";
-							case 0 when version.dwBuildNumber == 17134: return "10 1803";
-							case 0 when version.dwBuildNumber == 17763: return "10 1809";
-							case 0 when version.dwBuildNumber == 18362: return "10 1903";
-							case 0 when version.dwBuildNumber == 18363: return "10 1909";
-							case 0 when version.dwBuildNumber == 19041: return "10 2004";
-							case 0 when version.dwBuildNumber == 19042: return "10 20H2";
-							case 0 when version.dwBuildNumber > 19042: return "10 Dev Channel";
-							case 0: return "10 Preview";
+							case 0 when version.Build >= 17677: return "Server 2019";
+							case 0: return "Server 2016";
 						}
+
 						break;
 					case 6:
-						switch (version.dwMinorVersion)
+						switch (version.Minor)
+						{
+							case 3: return "Server 2012 R2";
+							case 2: return "Server 2012";
+							case 1: return "Server 2008 R2";
+							case 0: return "Server 2008";
+						}
+
+						break;
+					case 5:
+						try
+						{
+							switch (version.Minor)
+							{
+								// from https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
+								case 2 when GetSystemMetrics(89) != 0: return "Server 2003 R2";
+								case 2: return "Server 2003";
+							}
+						}
+						catch (Exception ex)
+						{
+							PlatformSettings.Log($"Error while fetching the Windows Server version: {ex.Message}", LogType.Warning);
+							if (version.Minor == 2)
+								return "Server 2003 - Error";
+						}
+
+						break;
+				}
+			else
+				switch (version.Major)
+				{
+					case 10:
+						switch (version.Minor)
+						{
+							case 0 when version.Build == 10240: return "10 1507";
+							case 0 when version.Build == 10586: return "10 1511";
+							case 0 when version.Build == 14393: return "10 1607";
+							case 0 when version.Build == 15063: return "10 1703";
+							case 0 when version.Build == 16299: return "10 1709";
+							case 0 when version.Build == 17134: return "10 1803";
+							case 0 when version.Build == 17763: return "10 1809";
+							case 0 when version.Build == 18362: return "10 1903";
+							case 0 when version.Build == 18363: return "10 1909";
+							case 0 when version.Build == 19041: return "10 2004";
+							case 0 when version.Build == 19042: return "10 20H2";
+							case 0 when version.Build > 19042: return "10 Dev Channel";
+							case 0: return "10 Preview";
+						}
+
+						break;
+					case 6:
+						switch (version.Minor)
 						{
 							case 4: return "10 Prerelease";
 							case 3: return "8.1";
@@ -291,57 +413,37 @@ namespace NorthwoodLib
 							case 1: return "7";
 							case 0: return "Vista";
 						}
+
 						break;
 					case 5:
-						switch (version.dwMinorVersion)
+						switch (version.Minor)
 						{
 							case 2: return "XP Professional x64 Edition";
 							case 1: return "XP";
 							case 0: return "2000";
 						}
-						break;
-				}
-			else
-				switch (version.dwMajorVersion)
-				{
-					case 10:
-						switch (version.dwMinorVersion)
-						{
-							case 0 when version.dwBuildNumber >= 17677: return "Server 2019";
-							case 0: return "Server 2016";
-						}
-						break;
-					case 6:
-						switch (version.dwMinorVersion)
-						{
-							case 3: return "Server 2012 R2";
-							case 2: return "Server 2012";
-							case 1: return "Server 2008 R2";
-							case 0: return "Server 2008";
-						}
-						break;
-					case 5:
-						// ReSharper disable once InconsistentNaming
-#pragma warning disable IDE1006
-						// from https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getsystemmetrics
-						const int SM_SERVERR2 = 89;
-#pragma warning restore IDE1006
-						switch (version.dwMinorVersion)
-						{
-							case 2 when GetSystemMetrics(SM_SERVERR2) != 0: return "Server 2003 R2";
-							case 2: return "Server 2003";
-						}
+
 						break;
 				}
 
 			return "Unknown";
 		}
 
-		private static string GetProductInfo(ref OSVERSIONINFO version)
+		private static string GetProductInfo(Version osVersion, Version spVersion)
 		{
-			if (version.dwMajorVersion < 6 || !GetProductInfo(version.dwMajorVersion, version.dwMinorVersion,
-				version.wServicePackMajor, version.wServicePackMinor, out uint pdwReturnedProductType))
+			uint pdwReturnedProductType;
+			try
+			{
+				if (!GetProductInfo((uint) osVersion.Major, (uint) osVersion.Minor,
+					(uint) spVersion.Major, (uint) spVersion.Minor, out pdwReturnedProductType))
+					return null;
+			}
+			catch (Exception ex)
+			{
+				PlatformSettings.Log($"Error while fetching the product info: {ex.Message}", LogType.Error);
 				return null;
+			}
+
 			// from https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getproductinfo
 			switch (pdwReturnedProductType)
 			{
