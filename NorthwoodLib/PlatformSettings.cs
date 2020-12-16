@@ -11,7 +11,7 @@ namespace NorthwoodLib
 		/// <summary>
 		/// Current library version
 		/// </summary>
-		internal const string VersionConst = "1.1.0";
+		internal const string VersionConst = "1.2.0";
 
 		/// <summary>
 		/// Returns the library version
