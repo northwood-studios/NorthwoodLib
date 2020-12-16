@@ -51,12 +51,10 @@ namespace NorthwoodLib.Tests
 				return;
 
 			Version version = OperatingSystem.Version;
-			OperatingSystem.OSVERSIONINFO info = new OperatingSystem.OSVERSIONINFO
-			{ dwMajorVersion = 6, dwMinorVersion = 2, dwBuildNumber = 9200 };
-			OperatingSystem.CheckTrueVersion(ref info);
-			Assert.Equal(version.Major, (int) info.dwMajorVersion);
-			Assert.Equal(version.Minor, (int) info.dwMinorVersion);
-			Assert.Equal(version.Build, (int) info.dwBuildNumber);
+			OperatingSystem.TryCheckWindowsFileVersion(out Version v);
+			Assert.Equal(version.Major, v.Major);
+			Assert.Equal(version.Minor, v.Minor);
+			Assert.Equal(version.Build, v.Build);
 		}
 	}
 }
