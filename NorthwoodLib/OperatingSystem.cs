@@ -399,8 +399,11 @@ namespace NorthwoodLib
 							case 0 when version.Build == 18363: return "10 1909";
 							case 0 when version.Build == 19041: return "10 2004";
 							case 0 when version.Build == 19042: return "10 20H2";
-							case 0 when version.Build > 19042: return "10 Dev Channel";
-							case 0: return "10 Preview";
+							case 0 when version.Build == 19043: return "10 21H1";
+							case 0 when version.Build == 19044: return "10 21H2";
+							case 0 when version.Build == 22000: return "11";
+							case 0 when version.Build < 22000: return "10 Preview";
+							case 0: return "11 Dev Channel";
 						}
 
 						break;
