@@ -348,6 +348,7 @@ namespace NorthwoodLib
 					case 10:
 						switch (version.Minor)
 						{
+							case 0 when version.Build >= 20348: return "Server 2022";
 							case 0 when version.Build >= 17677: return "Server 2019";
 							case 0: return "Server 2016";
 						}
