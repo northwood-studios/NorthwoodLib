@@ -30,6 +30,7 @@
 	
 	<ItemGroup>
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="7.0.0-preview.2.22152.2" />
+		<PackageReference Include="DnsClient" Version="1.7.0" />
 		<PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
 		<PackageReference Include="ZXing.Net" Version="0.16.9" />
 		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.1" />
