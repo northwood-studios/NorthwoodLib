@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
 using NorthwoodLib.Logging;
 
 namespace NorthwoodLib
@@ -104,22 +103,23 @@ namespace NorthwoodLib
 				if (kernelBase.IndexOf("Wine "u8) >= 0)
 				{
 					// not using Wine, ignore
-					PlatformSettings.Log($"Detected hidden Wine", LogType.Debug);
-					UsesWine = false;
+					PlatformSettings.Log("Detected hidden Wine", LogType.Debug);
+					UsesWine = true;
+					WineVersion = "Wine Hidden";
 				}
 				else
 				{
 					// not using Wine, ignore
 					PlatformSettings.Log($"Wine not detected: {ex.Message}", LogType.Debug);
 					UsesWine = false;
+					WineVersion = null;
+					return;
 				}
-				WineVersion = null;
 			}
 
 			UsesProton = kernelBase.IndexOf("Proton "u8) >= 0;
-
-			if (WineVersion == null)
-				return;
+			if (UsesProton)
+				WineVersion = $"Proton {WineVersion}";
 
 			try
 			{
