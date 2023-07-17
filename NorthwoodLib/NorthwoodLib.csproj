@@ -30,6 +30,8 @@
 	
 	<ItemGroup>
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="7.0.0-preview.2.22152.2" />
+		<PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
+		<PackageReference Include="ZXing.Net" Version="0.16.9" />
 		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.1" />
 		<PackageReference Include="PolySharp" Version="1.13.2">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -43,7 +45,7 @@
 	
 	<Target Name="CopyReferenceFilesBuild" BeforeTargets="Build">
 		<ItemGroup>
-			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" />
+			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" Exclude="%(Reference.RelativeDir)netstandard.xml" />
 		</ItemGroup>
 		<Message Text="Copying reference files to $(OutputPath)" Importance="High" />
 		<Copy SourceFiles="@(ReferenceFiles)" DestinationFolder="$(OutputPath)" Condition="Exists('%(RootDir)%(Directory)%(Filename)%(Extension)')" />
@@ -51,7 +53,7 @@
 	
 	<Target Name="CopyReferenceFilesPublish" BeforeTargets="Publish">
 		<ItemGroup>
-			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" />
+			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" Exclude="%(Reference.RelativeDir)netstandard.xml" />
 		</ItemGroup>
 		<Message Text="Copying reference files to $(PublishDir)" Importance="High" />
 		<Copy SourceFiles="@(ReferenceFiles)" DestinationFolder="$(PublishDir)" Condition="Exists('%(RootDir)%(Directory)%(Filename)%(Extension)')" />
