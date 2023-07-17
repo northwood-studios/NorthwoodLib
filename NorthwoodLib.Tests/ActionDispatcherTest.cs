@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -12,7 +11,7 @@ namespace NorthwoodLib.Tests
 		public void InvokeTest()
 		{
 			bool executed = false;
-			ActionDispatcher dispatcher = new ActionDispatcher();
+			ActionDispatcher dispatcher = new();
 			dispatcher.Dispatch(() => executed = true);
 			dispatcher.Invoke();
 			Assert.True(executed);
@@ -21,8 +20,8 @@ namespace NorthwoodLib.Tests
 		[Fact]
 		public void OrderTest()
 		{
-			List<int> list = new List<int>();
-			ActionDispatcher dispatcher = new ActionDispatcher();
+			List<int> list = new();
+			ActionDispatcher dispatcher = new();
 			dispatcher.Dispatch(() => list.Add(1));
 			dispatcher.Dispatch(() => list.Add(2));
 			dispatcher.Dispatch(() => list.Add(3));
@@ -36,11 +35,11 @@ namespace NorthwoodLib.Tests
 		public void WaitActionTest()
 		{
 			bool threadRunning = true;
-			ActionDispatcher dispatcher = new ActionDispatcher();
+			ActionDispatcher dispatcher = new();
 			new Thread(() =>
 				{
 					// ReSharper disable once AccessToModifiedClosure
-					while (threadRunning)
+					while (Volatile.Read(ref threadRunning))
 					{
 						dispatcher.Invoke();
 						Thread.Sleep(15);
@@ -49,7 +48,7 @@ namespace NorthwoodLib.Tests
 			{ IsBackground = true }.Start();
 			bool done = false;
 			dispatcher.Wait(() => done = true, 5);
-			threadRunning = false;
+			Volatile.Write(ref threadRunning, false);
 			Assert.True(done);
 		}
 
@@ -57,11 +56,11 @@ namespace NorthwoodLib.Tests
 		public void WaitFuncTest()
 		{
 			bool threadRunning = true;
-			ActionDispatcher dispatcher = new ActionDispatcher();
+			ActionDispatcher dispatcher = new();
 			new Thread(() =>
 				{
 					// ReSharper disable once AccessToModifiedClosure
-					while (threadRunning)
+					while (Volatile.Read(ref threadRunning))
 					{
 						dispatcher.Invoke();
 						Thread.Sleep(15);
@@ -69,7 +68,7 @@ namespace NorthwoodLib.Tests
 				})
 			{ IsBackground = true }.Start();
 			bool done = dispatcher.Wait(() => true, 5);
-			threadRunning = false;
+			Volatile.Write(ref threadRunning, false);
 			Assert.True(done);
 		}
 
@@ -77,19 +76,19 @@ namespace NorthwoodLib.Tests
 		public void WaitArrayTest()
 		{
 			bool threadRunning = true;
-			ActionDispatcher dispatcher = new ActionDispatcher();
+			ActionDispatcher dispatcher = new();
 			new Thread(() =>
 			{
 				// ReSharper disable once AccessToModifiedClosure
-				while (threadRunning)
+				while (Volatile.Read(ref threadRunning))
 				{
 					dispatcher.Invoke();
 					Thread.Sleep(15);
 				}
 			})
 			{ IsBackground = true }.Start();
-			List<int> list = new List<int>();
-			dispatcher.Wait(new Action[]
+			List<int> list = new();
+			dispatcher.Wait(new[]
 			{
 				() => list.Add(1),
 				() => list.Add(2),
@@ -97,7 +96,7 @@ namespace NorthwoodLib.Tests
 				() => list.Add(4),
 				() => list.Add(5)
 			}, 5);
-			threadRunning = false;
+			Volatile.Write(ref threadRunning, false);
 			Assert.True(list.SequenceEqual(new[] { 1, 2, 3, 4, 5 }));
 		}
 	}

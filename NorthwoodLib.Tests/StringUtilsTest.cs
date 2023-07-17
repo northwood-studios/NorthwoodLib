@@ -1,5 +1,5 @@
-using NorthwoodLib.Tests.Utilities;
 using System;
+using NorthwoodLib.Tests.Utilities;
 using Xunit;
 using Xunit.Abstractions;
 

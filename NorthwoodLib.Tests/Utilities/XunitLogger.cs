@@ -16,7 +16,7 @@ namespace NorthwoodLib.Tests.Utilities
 		private static int _refCount;
 
 		private static readonly string _logPath = Environment.GetEnvironmentVariable("xunitlogpath");
-		private static readonly object _writeLock = new object();
+		private static readonly object _writeLock = new();
 
 		/// <summary>
 		/// Logs data to XUnit output and log file set with environment variable xunitlogpath

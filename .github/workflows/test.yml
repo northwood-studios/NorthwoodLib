@@ -9,10 +9,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        framework: [netcoreapp3.1]
-        include:
-        - os: windows-latest
-          framework: net472
+        framework: [net8.0]
     env:
       xunitlogpath: ${{github.workspace}}/xunitlog.txt
           
@@ -22,7 +19,7 @@ jobs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1.7.2
       with:
-        dotnet-version: 3.1
+        dotnet-version: 8.0
 
     - name: Restore
       run: dotnet restore

@@ -10,7 +10,7 @@ namespace NorthwoodLib
 	/// </summary>
 	public sealed class ActionDispatcher
 	{
-		private readonly ConcurrentQueue<Action> _actionQueue = new ConcurrentQueue<Action>();
+		private readonly ConcurrentQueue<Action> _actionQueue = new();
 
 		/// <summary>
 		/// Queues an <see cref="Action"/>

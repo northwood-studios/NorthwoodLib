@@ -1,5 +1,6 @@
-using NorthwoodLib.Tests.Utilities;
+using System;
 using System.Runtime.InteropServices;
+using NorthwoodLib.Tests.Utilities;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -18,20 +19,31 @@ namespace NorthwoodLib.Tests
 				return;
 			Assert.False(WineInfo.UsesWine);
 			Assert.Null(WineInfo.WineVersion);
+#pragma warning disable CS0618
+			Assert.Null(WineInfo.WinePatches);
+#pragma warning restore CS0618
+			Assert.Null(WineInfo.WineHost);
 		}
 
 		[Fact]
 		public void UsesWineTest()
 		{
-			Assert.Equal(WineInfo.UsesWine, WineInfo.WineVersion != null);
+			if (WineInfo.WineVersion != null)
+				Assert.True(WineInfo.UsesWine);
 		}
 
 		[Fact]
+		public void UsesProtonTest()
+		{
+			if (WineInfo.UsesProton)
+				Assert.True(WineInfo.UsesWine);
+		}
+
+		[Fact]
+		[Obsolete("WinePatches is obsolete")]
 		public void WinePatchesTest()
 		{
-			if (WineInfo.WinePatches == null)
-				return;
-			Assert.False(string.IsNullOrWhiteSpace(WineInfo.WinePatches));
+			Assert.Null(WineInfo.WinePatches);
 		}
 
 		[Fact]
