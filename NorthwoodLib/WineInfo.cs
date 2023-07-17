@@ -100,14 +100,7 @@ namespace NorthwoodLib
 			}
 			catch (Exception ex)
 			{
-				if (kernelBase.IndexOf("Wine "u8) >= 0)
-				{
-					// not using Wine, ignore
-					PlatformSettings.Log("Detected hidden Wine", LogType.Debug);
-					UsesWine = true;
-					WineVersion = "Wine Hidden";
-				}
-				else
+				if (kernelBase.IndexOf("Wine "u8) < 0)
 				{
 					// not using Wine, ignore
 					PlatformSettings.Log($"Wine not detected: {ex.Message}", LogType.Debug);
@@ -115,6 +108,11 @@ namespace NorthwoodLib
 					WineVersion = null;
 					return;
 				}
+
+				// Wine hidden in winecfg
+				PlatformSettings.Log("Detected hidden Wine", LogType.Debug);
+				UsesWine = true;
+				WineVersion = "Wine Hidden";
 			}
 
 			UsesProton = kernelBase.IndexOf("Proton "u8) >= 0;
