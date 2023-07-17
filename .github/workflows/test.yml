@@ -17,7 +17,7 @@ jobs:
       xunitlogpath: ${{github.workspace}}/xunitlog.txt
           
     steps:
-    - uses: actions/checkout@v2.3.4
+    - uses: actions/checkout@v3.5.3
 
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1.7.2
