@@ -140,12 +140,11 @@ namespace NorthwoodLib
 				string release = Marshal.PtrToStringAnsi((nint)releasePtr)?.Trim() ?? "";
 				if (sysname != "" || release != "")
 				{
-					WineHost = "Host:";
-					if (!string.IsNullOrWhiteSpace(sysname))
-						WineHost += $" {sysname}";
+					WineHost = sysname;
 					if (!string.IsNullOrWhiteSpace(release))
 						WineHost += $" {release}";
-					WineVersion += $" Host:{WineHost}";
+					WineHost = WineHost.Trim();
+					WineVersion += $" Host: {WineHost}";
 				}
 			}
 			catch (Exception ex)
