@@ -12,9 +12,9 @@ namespace NorthwoodLib.Pools
 		/// <summary>
 		/// Gets a shared <see cref="StringBuilderPool"/> instance
 		/// </summary>
-		public static readonly StringBuilderPool Shared = new StringBuilderPool();
+		public static readonly StringBuilderPool Shared = new();
 
-		private readonly ConcurrentQueue<StringBuilder> _pool = new ConcurrentQueue<StringBuilder>();
+		private readonly ConcurrentQueue<StringBuilder> _pool = new();
 
 		/// <summary>
 		/// Gives a pooled <see cref="StringBuilder"/>

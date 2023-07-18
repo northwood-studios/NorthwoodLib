@@ -1,7 +1,7 @@
-using NorthwoodLib.Logging;
-using NorthwoodLib.Tests.Utilities;
 using System;
 using System.Threading;
+using NorthwoodLib.Logging;
+using NorthwoodLib.Tests.Utilities;
 using Xunit;
 using Xunit.Abstractions;
 

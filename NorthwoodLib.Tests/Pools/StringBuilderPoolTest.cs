@@ -1,5 +1,5 @@
-using NorthwoodLib.Pools;
 using System.Text;
+using NorthwoodLib.Pools;
 using Xunit;
 
 namespace NorthwoodLib.Tests.Pools

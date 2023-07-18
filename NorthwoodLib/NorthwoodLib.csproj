@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net472;netstandard2.1</TargetFrameworks>
-		<LangVersion>7.3</LangVersion>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<LangVersion>preview</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace>NorthwoodLib</RootNamespace>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -12,7 +12,7 @@
 		<Description>NorthwoodLib</Description>
 		<Company>Hubert Moszka Northwood</Company>
 		<Authors>Hubert Moszka Northwood</Authors>
-		<Copyright>Hubert Moszka Northwood, 2020-2021</Copyright>
+		<Copyright>Hubert Moszka Northwood, 2020-2023</Copyright>
 	</PropertyGroup>
 	
 	<PropertyGroup>
@@ -29,15 +29,24 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-		<PackageReference Include="System.Buffers" Version="4.5.1" />
-		<PackageReference Include="System.Memory" Version="4.5.4" />
-		<PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
-		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="5.0.0" />
+		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="7.0.0-preview.2.22152.2" />
+		<PackageReference Include="DnsClient" Version="1.7.0" />
+		<PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
+		<PackageReference Include="ZXing.Net" Version="0.16.9" />
+		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.1" />
+		<PackageReference Include="PolySharp" Version="1.13.2">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
 	</ItemGroup>
+	
+	<PropertyGroup>
+		<PolySharpUsePublicAccessibilityForGeneratedTypes>true</PolySharpUsePublicAccessibilityForGeneratedTypes>
+	</PropertyGroup>
 	
 	<Target Name="CopyReferenceFilesBuild" BeforeTargets="Build">
 		<ItemGroup>
-			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" />
+			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" Exclude="%(Reference.RelativeDir)netstandard.xml" />
 		</ItemGroup>
 		<Message Text="Copying reference files to $(OutputPath)" Importance="High" />
 		<Copy SourceFiles="@(ReferenceFiles)" DestinationFolder="$(OutputPath)" Condition="Exists('%(RootDir)%(Directory)%(Filename)%(Extension)')" />
@@ -45,7 +54,7 @@
 	
 	<Target Name="CopyReferenceFilesPublish" BeforeTargets="Publish">
 		<ItemGroup>
-			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" />
+			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" Exclude="%(Reference.RelativeDir)netstandard.xml" />
 		</ItemGroup>
 		<Message Text="Copying reference files to $(PublishDir)" Importance="High" />
 		<Copy SourceFiles="@(ReferenceFiles)" DestinationFolder="$(PublishDir)" Condition="Exists('%(RootDir)%(Directory)%(Filename)%(Extension)')" />

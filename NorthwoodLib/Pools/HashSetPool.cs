@@ -13,9 +13,9 @@ namespace NorthwoodLib.Pools
 		/// <summary>
 		/// Gets a shared <see cref="HashSetPool{T}"/> instance
 		/// </summary>
-		public static readonly HashSetPool<T> Shared = new HashSetPool<T>();
+		public static readonly HashSetPool<T> Shared = new();
 
-		private readonly ConcurrentQueue<HashSet<T>> _pool = new ConcurrentQueue<HashSet<T>>();
+		private readonly ConcurrentQueue<HashSet<T>> _pool = new();
 
 		/// <summary>
 		/// Gives a pooled <see cref="HashSet{T}"/>

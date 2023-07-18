@@ -1,8 +1,8 @@
-using NorthwoodLib.Pools;
 using System;
 using System.Buffers;
 using System.Text;
 using System.Text.RegularExpressions;
+using NorthwoodLib.Pools;
 
 namespace NorthwoodLib
 {
@@ -11,8 +11,8 @@ namespace NorthwoodLib
 	/// </summary>
 	public static class StringUtils
 	{
-		private static readonly Regex UnicodeRegex = new Regex(@"[^\u0000-\u007F]", RegexOptions.Compiled);
-		private static readonly Regex TagRegex = new Regex("<.*?>", RegexOptions.Compiled);
+		private static readonly Regex UnicodeRegex = new(@"[^\u0000-\u007F]", RegexOptions.Compiled);
+		private static readonly Regex TagRegex = new("<.*?>", RegexOptions.Compiled);
 
 		/// <summary>
 		/// Truncates a string to the last occurance of <see paramref="character"/> within <see paramref="maxSize"/> characters if it's longer than it
@@ -24,7 +24,7 @@ namespace NorthwoodLib
 		public static string TruncateToLast(this string text, int maxSize, char character)
 		{
 			int index = text.LastIndexOf(character, maxSize - 1, maxSize);
-			return text.Length <= maxSize ? text : text.Substring(0, index == -1 ? maxSize : index + 1);
+			return text.Length <= maxSize ? text : text[..(index == -1 ? maxSize : index + 1)];
 		}
 
 		/// <summary>
@@ -38,7 +38,7 @@ namespace NorthwoodLib
 		public static string TruncateToLast(this string text, int maxSize, string str, StringComparison comparison = StringComparison.Ordinal)
 		{
 			int index = text.LastIndexOf(str, maxSize - 1, maxSize, comparison);
-			return text.Length <= maxSize ? text : text.Substring(0, index == -1 ? maxSize : index + str.Length);
+			return text.Length <= maxSize ? text : text[..(index == -1 ? maxSize : index + str.Length)];
 		}
 
 		/// <summary>
@@ -109,7 +109,7 @@ namespace NorthwoodLib
 		{
 			StringBuilder sb = StringBuilderPool.Shared.Rent(str.Length);
 			foreach (char c in str)
-				if (c >= '0' && c <= '9' || c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c == ' ' || c == '-' || c == '.' || c == ',' || c == '_')
+				if (c is >= '0' and <= '9' or >= 'A' and <= 'Z' or >= 'a' and <= 'z' or ' ' or '-' or '.' or ',' or '_')
 					sb.Append(c);
 			string text = sb.Length == str.Length ? str : sb.ToString();
 			StringBuilderPool.Shared.Return(sb);

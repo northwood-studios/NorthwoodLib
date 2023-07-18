@@ -13,9 +13,9 @@ namespace NorthwoodLib.Pools
 		/// <summary>
 		/// Gets a shared <see cref="ListPool{T}"/> instance
 		/// </summary>
-		public static readonly ListPool<T> Shared = new ListPool<T>();
+		public static readonly ListPool<T> Shared = new();
 
-		private readonly ConcurrentQueue<List<T>> _pool = new ConcurrentQueue<List<T>>();
+		private readonly ConcurrentQueue<List<T>> _pool = new();
 
 		/// <summary>
 		/// Gives a pooled <see cref="List{T}"/>

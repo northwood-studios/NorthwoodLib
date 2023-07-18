@@ -1,7 +1,7 @@
-using NorthwoodLib.Tests.Utilities;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using NorthwoodLib.Tests.Utilities;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -20,11 +20,10 @@ namespace NorthwoodLib.Tests
 		}
 
 		[Fact]
+		[Obsolete("UsesWine is obsolete")]
 		public void UsesWineTest()
 		{
-#pragma warning disable 618
 			Assert.Equal(WineInfo.UsesWine, OperatingSystem.UsesWine);
-#pragma warning restore 618
 		}
 
 		[Fact]
