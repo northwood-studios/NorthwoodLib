@@ -115,21 +115,21 @@ namespace NorthwoodLib
 				WineVersion = "Wine Hidden";
 			}
 
-			UsesProton = kernelBase.IndexOf("Proton "u8) >= 0;
-			if (UsesProton)
-				WineVersion = $"Proton {WineVersion}";
-
 			try
 			{
 				string wineBuild = Marshal.PtrToStringAnsi((nint)GetWineBuildId());
 
 				if (!string.IsNullOrWhiteSpace(wineBuild))
-					WineVersion += $" {wineBuild}";
+					WineVersion = wineBuild;
 			}
 			catch (Exception ex)
 			{
 				PlatformSettings.Log($"Wine build not detected: {ex.Message}", LogType.Debug);
 			}
+
+			UsesProton = kernelBase.IndexOf("Proton "u8) >= 0;
+			if (UsesProton)
+				WineVersion = $"Proton {WineVersion}";
 
 			try
 			{
@@ -140,12 +140,11 @@ namespace NorthwoodLib
 				string release = Marshal.PtrToStringAnsi((nint)releasePtr)?.Trim() ?? "";
 				if (sysname != "" || release != "")
 				{
-					WineHost = "Host:";
-					if (!string.IsNullOrWhiteSpace(sysname))
-						WineHost += $" {sysname}";
+					WineHost = sysname;
 					if (!string.IsNullOrWhiteSpace(release))
 						WineHost += $" {release}";
-					WineVersion += $" Host:{WineHost}";
+					WineHost = WineHost.Trim();
+					WineVersion += $" Host: {WineHost}";
 				}
 			}
 			catch (Exception ex)
