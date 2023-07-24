@@ -46,7 +46,6 @@ public static unsafe partial class OperatingSystem
 		/// <summary>
 		/// The service-pack version string.
 		/// </summary>
-		[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
 		public fixed ushort szCSDVersion[128];
 
 		/// <summary>
