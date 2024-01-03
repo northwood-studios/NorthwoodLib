@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
 
 namespace NorthwoodLib
@@ -37,6 +38,12 @@ namespace NorthwoodLib
 		public T* ToPointer<T>() where T : unmanaged
 		{
 			return (T*) Data.ToPointer();
+		}
+
+		public void Clear()
+		{
+			if (Length > 0)
+				Marshal.ZeroFreeCoTaskMemAnsi(Data);
 		}
 
 		private void Free()
