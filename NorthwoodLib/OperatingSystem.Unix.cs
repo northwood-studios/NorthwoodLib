@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using NorthwoodLib.Logging;
 
@@ -21,18 +21,18 @@ public static partial class OperatingSystem
 		try
 		{
 			using (FileStream fs = new(osrelease, FileMode.Open, FileAccess.Read, FileShare.Read))
-				using (StreamReader sr = new(fs))
-					while (sr.ReadLine() is { } line)
-					{
-						line = line.Trim();
-						const string prettyname = "PRETTY_NAME=";
+			using (StreamReader sr = new(fs))
+				while (sr.ReadLine() is { } line)
+				{
+					line = line.Trim();
+					const string prettyname = "PRETTY_NAME=";
 
-						if (line.StartsWith(prettyname))
-						{
-							name = $"{line[prettyname.Length..].Replace("\"", "").Trim()} {Environment.OSVersion.VersionString}".Trim();
-							return true;
-						}
-					}
+					if (!line.StartsWith(prettyname))
+						continue;
+
+					name = $"{line[prettyname.Length..].Replace("\"", "").Trim()} {version}".Trim();
+					return true;
+				}
 		}
 		catch (FileNotFoundException)
 		{

@@ -1,9 +1,11 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using NorthwoodLib.Logging;
+using NorthwoodLib.Pools;
 
 namespace NorthwoodLib;
 
@@ -11,6 +13,8 @@ public static unsafe partial class OperatingSystem
 {
 	// ReSharper disable InconsistentNaming
 	// ReSharper disable FieldCanBeMadeReadOnly.Local
+#pragma warning disable IDE1006
+#pragma warning disable IDE0044
 	/// <summary>
 	/// Managed version of <see href="https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw"/>
 	/// </summary>
@@ -73,10 +77,12 @@ public static unsafe partial class OperatingSystem
 		/// </summary>
 		private byte wReserved;
 	}
+#pragma warning restore IDE0044
 	// ReSharper restore FieldCanBeMadeReadOnly.Local
 
 	private const string Ntdll = "ntdll";
 	private const string Kernel32 = "kernel32";
+	private const string RegistryPath = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion";
 
 	/// <summary>
 	/// Returns version information about the currently running operating system.
@@ -91,10 +97,10 @@ public static unsafe partial class OperatingSystem
 	/// Converts the specified NTSTATUS code to its equivalent system error code.
 	/// <see href="https://docs.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-rtlntstatustodoserror"/>
 	/// </summary>
-	/// <param name="Status">The NTSTATUS code to be converted.</param>
+	/// <param name="status">The NTSTATUS code to be converted.</param>
 	/// <returns>Corresponding system error code.</returns>
 	[DllImport(Ntdll, EntryPoint = "RtlNtStatusToDosError", ExactSpelling = true)]
-	private static extern int NtStatusToDosCode(uint Status);
+	private static extern int NtStatusToDosCode(uint status);
 
 	/// <summary>
 	/// Returns version information about the currently running operating system.
@@ -117,11 +123,12 @@ public static unsafe partial class OperatingSystem
 	/// <returns>A nonzero value on success. This function fails if one of the input parameters is invalid.</returns>
 	[DllImport(Kernel32, EntryPoint = "GetProductInfo", ExactSpelling = true)]
 	private static extern uint GetProductInfo(uint idwOSMajorVersiond, uint dwOSMinorVersion, uint dwSpMajorVersion, uint dwSpMinorVersion, uint* pdwReturnedProductType);
+#pragma warning restore IDE1006
 	// ReSharper restore InconsistentNaming
 
 	private static bool TryGetWindowsVersion(out Version version, out string name)
 	{
-		name = WineInfo.UsesWine ? $"{WineInfo.WineVersion} " : "";
+		StringBuilder nameBuilder = StringBuilderPool.Shared.Rent(WineInfo.UsesWine ? $"{WineInfo.WineVersion} " : "");
 		version = null;
 
 		bool server = false;
@@ -130,7 +137,7 @@ public static unsafe partial class OperatingSystem
 
 		OSVERSIONINFO osVersionInfo = new()
 		{
-			dwOSVersionInfoSize = (uint)sizeof(OSVERSIONINFO)
+			dwOSVersionInfoSize = (uint) sizeof(OSVERSIONINFO)
 		};
 		try
 		{
@@ -159,7 +166,7 @@ public static unsafe partial class OperatingSystem
 
 		try
 		{
-			if (!IsValidWindowsVersion(version) && TryCheckWindowsFileVersion(out Version fileVersion))
+			if (!IsValidWindowsVersion(version) && TryCheckWindowsFileVersion(out Version fileVersion, GetWindowsRegistryBuild()))
 			{
 				PlatformSettings.Log(
 					$"Correcting system version using files from {version.PrintVersion()} to {fileVersion.Major}.{fileVersion.Minor}.{fileVersion.Build}",
@@ -190,48 +197,68 @@ public static unsafe partial class OperatingSystem
 			};
 
 		// ReSharper disable HeapView.BoxingAllocation
-		name += $"Windows {ProcessWindowsVersion(version, server)}";
+		nameBuilder.Append($"Windows {ProcessWindowsVersion(version, server, GetHklmString(RegistryPath, "DisplayVersion"))}");
 
 		string product = GetProductInfo(version, servicePackVersion);
 
 		if (!string.IsNullOrWhiteSpace(product))
-			name += $" {product}";
+			nameBuilder.Append($" {product}");
 
 		if (!string.IsNullOrWhiteSpace(servicePack))
-			name += $" {servicePack}";
+			nameBuilder.Append($" {servicePack}");
 
 		int systemBits = Environment.Is64BitOperatingSystem ? 64 : 32;
-		int processBits = IntPtr.Size * 8;
+		int processBits = sizeof(nuint) * 8;
 
-		if (systemBits == processBits)
-			name += $" {systemBits}bit";
-		else
-			name += $" {systemBits}bit Process: {processBits}bit";
-		name = name.Trim();
+		nameBuilder.Append(systemBits == processBits ?
+			$" {systemBits}bit" :
+			$" {systemBits}bit Process: {processBits}bit");
+
+		name = nameBuilder.ToString().Trim();
 		// ReSharper restore HeapView.BoxingAllocation
 		return true;
 	}
 
 	private static void ParseWindowsVersion(OSVERSIONINFO osVersionInfo, out Version version, out bool server, out string servicePack, out Version servicePackVersion)
 	{
-		version = new Version((int)osVersionInfo.dwMajorVersion, (int)osVersionInfo.dwMinorVersion, (int)osVersionInfo.dwBuildNumber);
+		version = new Version((int) osVersionInfo.dwMajorVersion, (int) osVersionInfo.dwMinorVersion, (int) osVersionInfo.dwBuildNumber);
 		// from https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw
 		server = osVersionInfo.wProductType != 1;
-		servicePack = new string((char*)osVersionInfo.szCSDVersion);
+		servicePack = new string((char*) osVersionInfo.szCSDVersion);
 		servicePackVersion = new Version(osVersionInfo.wServicePackMajor, osVersionInfo.wServicePackMinor);
+	}
+
+	/// <summary>
+	/// Attempts to retrieve the Windows Build from registry
+	/// </summary>
+	/// <returns>Parsed value if successful, <see langword="null"/> otherwise</returns>
+	internal static int? GetWindowsRegistryBuild()
+	{
+		return int.TryParse(GetHklmString(RegistryPath, "CurrentBuildNumber"), out int build) && build > 0
+			? build
+			: int.TryParse(GetHklmString(RegistryPath, "CurrentBuild"), out build) && build > 0
+				? build
+				: null;
 	}
 
 	/// <summary>
 	/// Fetches the Windows version from system files
 	/// </summary>
 	/// <param name="version">System version</param>
-	/// <returns>True if successful, false otherwise</returns>
-	internal static bool TryCheckWindowsFileVersion(out Version version)
+	/// <param name="realBuild">Real build value if known</param>
+	/// <returns><see langword="true"/> if successful, <see langword="false"/> otherwise</returns>
+	internal static bool TryCheckWindowsFileVersion(out Version version, int? realBuild)
 	{
-		foreach (string file in new[]
-				{
-					"cmd.exe", "conhost.exe", "dxdiag.exe", "msinfo32.exe", "msconfig.exe", "mspaint.exe", "notepad.exe", "winver.exe"
-				})
+		foreach (string file in (ReadOnlySpan<string>) [
+					 "cmd.exe",
+					 "conhost.exe",
+					 "dxdiag.exe",
+					 "msinfo32.exe",
+					 "msconfig.exe",
+					 "mspaint.exe",
+					 "notepad.exe",
+					 "winver.exe"
+				 ])
 		{
 			FileVersionInfo fileVersionInfo;
 
@@ -250,10 +277,10 @@ public static unsafe partial class OperatingSystem
 				continue;
 			}
 
-			version = new Version(fileVersionInfo.FileMajorPart, fileVersionInfo.FileMinorPart, fileVersionInfo.FileBuildPart);
+			version = new Version(fileVersionInfo.FileMajorPart, fileVersionInfo.FileMinorPart, realBuild ?? fileVersionInfo.FileBuildPart);
 
 			if (!IsValidWindowsVersion(version))
-				version = new Version(fileVersionInfo.ProductMajorPart, fileVersionInfo.ProductMinorPart, fileVersionInfo.ProductBuildPart);
+				version = new Version(fileVersionInfo.ProductMajorPart, fileVersionInfo.ProductMinorPart, realBuild ?? fileVersionInfo.ProductBuildPart);
 
 			if (IsValidWindowsVersion(version))
 				return true;
@@ -279,55 +306,91 @@ public static unsafe partial class OperatingSystem
 		return version == null ? "(null)" : $"{version.Major}.{version.Minor}{(version.Build > 0 ? $".{version.Build}" : "")}";
 	}
 
-	private static string ProcessWindowsVersion(Version version, bool server)
+	private static string ProcessWindowsVersion(Version version, bool server, string displayVersion)
 	{
 		switch (version?.Major)
 		{
 			case 10 when version.Minor == 0 && server:
-				return version.Build switch
 				{
-					14393 => "Server 2016 1607",
-					16299 => "Server 2016 1709",
-					17134 => "Server 2016 1803",
-					17763 => "Server 2019 1809",
-					18362 => "Server 2019 1903",
-					18363 => "Server 2019 1909",
-					19041 => "Server 2019 2004",
-					19042 => "Server 2019 20H2",
-					20348 => "Server 2022 21H2",
-					_ => $"Server {(version.Build < 20000 ? version.Build < 17677 ? 2016 : 2019 : 2022)} build {version.Build}"
-				};
-			case 10 when version.Minor == 0:
-				return version.Build switch
-				{
-					10240 => "10 1507",
-					10586 => "10 1511",
-					14393 => "10 1607",
-					15063 => "10 1703",
-					16299 => "10 1709",
-					17134 => "10 1803",
-					17763 => "10 1809",
-					18362 => "10 1903",
-					18363 => "10 1909",
-					19041 => "10 2004",
-					19042 => "10 20H2",
-					19043 => "10 21H1",
-					19044 => "10 21H2",
-					19045 => "10 22H2",
-					22000 => "11 21H2",
-					22621 => "11 22H2",
-					22631 => "11 23H2",
-					_ => $"{(version.Build < 22000 ? 10 : 11)} build {version.Build}"
-				};
-			case 6:
-				switch (version.Minor)
-				{
-					case 3: return server ? "Server 2012 R2" : "8.1";
-					case 2: return server ? "Server 2012" : "8";
-					case 1: return server ? "Server 2008 R2" : "7";
-					case 0: return server ? "Server 2008" : "Vista";
+					string main = version.Build switch
+					{
+						25398 => "Annual Channel",
+						> 26040 => "2025",
+						> 20000 => "2022",
+						> 17677 => "2019",
+						_ => "2016"
+					};
+					string patch = displayVersion ?? version.Build switch
+					{
+						14393 => "1607",
+						16299 => "1709",
+						17134 => "1803",
+						17763 => "1809",
+						18362 => "1903",
+						18363 => "1909",
+						19041 => "2004",
+						19042 => "20H2",
+						20348 => "21H2",
+						25398 => "23H2",
+						26040 => "23H2",
+						26100 => "24H2",
+						_ => $"build {version.Build}"
+					};
+					return $"Server {main} {patch}";
 				}
-				break;
+			case 10 when version.Minor == 0:
+				{
+					string main = version.Build switch
+					{
+						> 22000 => "11",
+						_ => "10"
+					};
+					string patch = displayVersion ?? version.Build switch
+					{
+						10240 => "1507",
+						10586 => "1511",
+						14393 => "1607",
+						15063 => "1703",
+						16299 => "1709",
+						17134 => "1803",
+						17763 => "1809",
+						18362 => "1903",
+						18363 => "1909",
+						19041 => "2004",
+						19042 => "20H2",
+						19043 => "21H1",
+						19044 => "21H2",
+						19045 => "22H2",
+						22000 => "21H2",
+						22621 => "22H2",
+						22631 => "23H2",
+						26100 => "24H2",
+						_ => $"build {version.Build}"
+					};
+					return $"{main} {patch}";
+				}
+			case 6 when server:
+				{
+					switch (version.Minor)
+					{
+						case 3: return "Server 2012 R2";
+						case 2: return "Server 2012";
+						case 1: return "Server 2008 R2";
+						case 0: return "Server 2008";
+					}
+					break;
+				}
+			case 6:
+				{
+					switch (version.Minor)
+					{
+						case 3: return "8.1";
+						case 2: return "8";
+						case 1: return "7";
+						case 0: return "Vista";
+					}
+					break;
+				}
 		}
 
 		return version.PrintVersion();
@@ -455,5 +518,27 @@ public static unsafe partial class OperatingSystem
 			0x0000001D => "Web Server (core installation)",
 			_ => $"0x{pdwReturnedProductType:X8}"
 		};
+	}
+
+	private static string GetHklmString(string key, string value)
+	{
+		[DllImport("Advapi32", EntryPoint = "RegGetValueW", ExactSpelling = true)]
+		static extern int RegGetValue(nint hkey, ushort* key, ushort* value, uint flags, uint* type, void* data, uint* dataLength);
+
+		const nint hklm = -2147483646;
+		const uint sz = 0x00000002;
+
+		const int bufferSize = 8;
+		ushort* data = stackalloc ushort[bufferSize];
+
+		uint dataSize = bufferSize * sizeof(ushort);
+		fixed (char* keyPointer = key)
+		fixed (char* valuePointer = value)
+		{
+			if (RegGetValue(hklm, (ushort*)keyPointer, (ushort*) valuePointer, sz, null, data, &dataSize) != 0)
+				return null;
+		}
+
+		return new string((char*)data);
 	}
 }
