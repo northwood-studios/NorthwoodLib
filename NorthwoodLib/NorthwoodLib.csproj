@@ -1,10 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
-		<LangVersion>preview</LangVersion>
+		<LangVersion>12</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace>NorthwoodLib</RootNamespace>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DebugType>portable</DebugType>
+		<Deterministic>true</Deterministic>
 
 		<AssemblyName>NorthwoodLib</AssemblyName>
 		<Product>NorthwoodLib</Product>
@@ -12,7 +14,7 @@
 		<Description>NorthwoodLib</Description>
 		<Company>Hubert Moszka Northwood</Company>
 		<Authors>Hubert Moszka Northwood</Authors>
-		<Copyright>Hubert Moszka Northwood, 2020-2023</Copyright>
+		<Copyright>Hubert Moszka Northwood, 2020-2024</Copyright>
 	</PropertyGroup>
 	
 	<PropertyGroup>
