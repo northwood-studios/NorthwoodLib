@@ -15,9 +15,6 @@ public class WineInfoTest(ITestOutputHelper output) : LoggingTest(output)
 			return;
 		Assert.False(WineInfo.UsesWine);
 		Assert.Null(WineInfo.WineVersion);
-#pragma warning disable CS0618
-		Assert.Null(WineInfo.WinePatches);
-#pragma warning restore CS0618
 		Assert.Null(WineInfo.WineHost);
 	}
 
