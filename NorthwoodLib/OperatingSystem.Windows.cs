@@ -139,6 +139,7 @@ public static unsafe partial class OperatingSystem
 		{
 			dwOSVersionInfoSize = (uint) sizeof(OSVERSIONINFO)
 		};
+
 		try
 		{
 			uint status = GetVersion(&osVersionInfo);
@@ -164,20 +165,21 @@ public static unsafe partial class OperatingSystem
 				PlatformSettings.Log($"Failed to correct Windows version with GetVersionExW! {ex.Message}", LogType.Warning);
 			}
 
-		try
-		{
-			if (!IsValidWindowsVersion(version) && TryCheckWindowsFileVersion(out Version fileVersion, GetWindowsRegistryBuild()))
+		if (!IsValidWindowsVersion(version))
+			try
 			{
-				PlatformSettings.Log(
-					$"Correcting system version using files from {version.PrintVersion()} to {fileVersion.Major}.{fileVersion.Minor}.{fileVersion.Build}",
-					LogType.Warning);
-				version = fileVersion;
+				if (TryCheckWindowsFileVersion(out Version fileVersion, GetWindowsRegistryBuild()))
+				{
+					PlatformSettings.Log(
+						$"Correcting system version using files from {version.PrintVersion()} to {fileVersion.Major}.{fileVersion.Minor}.{fileVersion.Build}",
+						LogType.Warning);
+					version = fileVersion;
+				}
 			}
-		}
-		catch (Exception ex)
-		{
-			PlatformSettings.Log($"Failed to correct Windows version using files! {ex.Message}", LogType.Warning);
-		}
+			catch (Exception ex)
+			{
+				PlatformSettings.Log($"Failed to correct Windows version using files! {ex.Message}", LogType.Warning);
+			}
 
 		if (!IsValidWindowsVersion(version))
 			version = Environment.OSVersion.Version;
@@ -185,16 +187,15 @@ public static unsafe partial class OperatingSystem
 		if (string.IsNullOrWhiteSpace(servicePack))
 			servicePack = Environment.OSVersion.ServicePack;
 
-		if (servicePackVersion == null)
-			servicePackVersion = Environment.OSVersion.ServicePack switch
-			{
-				"Service Pack 1" => new Version(1, 0),
-				"Service Pack 2" => new Version(2, 0),
-				"Service Pack 3" => new Version(3, 0),
-				"Service Pack 4" => new Version(4, 0),
-				"Service Pack 5" => new Version(5, 0),
-				_ => null
-			};
+		servicePackVersion ??= Environment.OSVersion.ServicePack switch
+		{
+			"Service Pack 1" => new Version(1, 0),
+			"Service Pack 2" => new Version(2, 0),
+			"Service Pack 3" => new Version(3, 0),
+			"Service Pack 4" => new Version(4, 0),
+			"Service Pack 5" => new Version(5, 0),
+			_ => null
+		};
 
 		// ReSharper disable HeapView.BoxingAllocation
 		nameBuilder.Append($"Windows {ProcessWindowsVersion(version, server, GetHklmString(RegistryPath, "DisplayVersion"))}");
@@ -214,7 +215,7 @@ public static unsafe partial class OperatingSystem
 			$" {systemBits}bit" :
 			$" {systemBits}bit Process: {processBits}bit");
 
-		name = nameBuilder.ToString().Trim();
+		name = StringBuilderPool.Shared.ToStringReturn(nameBuilder).Trim();
 		// ReSharper restore HeapView.BoxingAllocation
 		return true;
 	}
@@ -535,10 +536,10 @@ public static unsafe partial class OperatingSystem
 		fixed (char* keyPointer = key)
 		fixed (char* valuePointer = value)
 		{
-			if (RegGetValue(hklm, (ushort*)keyPointer, (ushort*) valuePointer, sz, null, data, &dataSize) != 0)
+			if (RegGetValue(hklm, (ushort*) keyPointer, (ushort*) valuePointer, sz, null, data, &dataSize) != 0)
 				return null;
 		}
 
-		return new string((char*)data);
+		return new string((char*) data);
 	}
 }
