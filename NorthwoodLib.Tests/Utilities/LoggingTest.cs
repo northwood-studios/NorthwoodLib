@@ -1,53 +1,51 @@
 using System;
-using System.Threading;
 using NorthwoodLib.Logging;
 using Xunit.Abstractions;
 
-namespace NorthwoodLib.Tests.Utilities
+namespace NorthwoodLib.Tests.Utilities;
+
+/// <summary>
+/// Base for tests using <see cref="XunitLogger"/>
+/// </summary>
+public abstract class LoggingTest : IDisposable
 {
+	protected readonly XunitLogger Logger;
+	private readonly int _currentThread;
+
 	/// <summary>
-	/// Base for tests using <see cref="XunitLogger"/>
+	/// Creates the <see cref="Logger"/> and starts listening to <see cref="PlatformSettings.Logged"/> with it
 	/// </summary>
-	public abstract class LoggingTest : IDisposable
+	/// <param name="output">Xunit output handler</param>
+	protected LoggingTest(ITestOutputHelper output)
 	{
-		protected readonly XunitLogger Logger;
-		private readonly int _currentThread;
+		Logger = new XunitLogger(output, GetType());
+		_currentThread = Environment.CurrentManagedThreadId;
+		PlatformSettings.Logged += Log;
+	}
 
-		/// <summary>
-		/// Creates the <see cref="Logger"/> and starts listening to <see cref="PlatformSettings.Logged"/> with it
-		/// </summary>
-		/// <param name="output">Xunit output handler</param>
-		protected LoggingTest(ITestOutputHelper output)
-		{
-			Logger = new XunitLogger(output, GetType());
-			_currentThread = Thread.CurrentThread.ManagedThreadId;
-			PlatformSettings.Logged += Log;
-		}
+	private void Log(string message, LogType type)
+	{
+		if (Environment.CurrentManagedThreadId == _currentThread)
+			Logger.WriteLine(message);
+	}
 
-		private void Log(string message, LogType type)
-		{
-			if (Thread.CurrentThread.ManagedThreadId == _currentThread)
-				Logger.WriteLine(message);
-		}
+	private void Close()
+	{
+		PlatformSettings.Logged -= Log;
+		Logger.Dispose();
+	}
 
-		private void Close()
-		{
-			PlatformSettings.Logged -= Log;
-			Logger.Dispose();
-		}
+	/// <summary>
+	/// Disposes the <see cref="Logger"/>
+	/// </summary>
+	public void Dispose()
+	{
+		Close();
+		GC.SuppressFinalize(this);
+	}
 
-		/// <summary>
-		/// Disposes the <see cref="Logger"/>
-		/// </summary>
-		public void Dispose()
-		{
-			Close();
-			GC.SuppressFinalize(this);
-		}
-
-		~LoggingTest()
-		{
-			Close();
-		}
+	~LoggingTest()
+	{
+		Close();
 	}
 }
