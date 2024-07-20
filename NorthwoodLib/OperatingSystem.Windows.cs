@@ -115,14 +115,14 @@ public static unsafe partial class OperatingSystem
 	/// Retrieves the product type for the operating system on the local computer, and maps the type to the product types supported by the specified operating system.
 	/// <see href="https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getproductinfo"/>
 	/// </summary>
-	/// <param name="idwOSMajorVersiond">The major version number of the operating system.</param>
+	/// <param name="idwOSMajorVersion">The major version number of the operating system.</param>
 	/// <param name="dwOSMinorVersion">The minor version number of the operating system.</param>
 	/// <param name="dwSpMajorVersion">The major version number of the operating system service pack.</param>
 	/// <param name="dwSpMinorVersion">The minor version number of the operating system service pack.</param>
 	/// <param name="pdwReturnedProductType">The product type.</param>
 	/// <returns>A nonzero value on success. This function fails if one of the input parameters is invalid.</returns>
 	[DllImport(Kernel32, EntryPoint = "GetProductInfo", ExactSpelling = true)]
-	private static extern uint GetProductInfo(uint idwOSMajorVersiond, uint dwOSMinorVersion, uint dwSpMajorVersion, uint dwSpMinorVersion, uint* pdwReturnedProductType);
+	private static extern uint GetProductInfo(uint idwOSMajorVersion, uint dwOSMinorVersion, uint dwSpMajorVersion, uint dwSpMinorVersion, uint* pdwReturnedProductType);
 #pragma warning restore IDE1006
 	// ReSharper restore InconsistentNaming
 
@@ -540,6 +540,6 @@ public static unsafe partial class OperatingSystem
 				return null;
 		}
 
-		return new string((char*) data);
+		return new string((char*) data, 0, (int)(dataSize / sizeof(ushort) - 1));
 	}
 }
