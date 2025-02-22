@@ -16,7 +16,7 @@
 		<Authors>Hubert Moszka Northwood</Authors>
 		<Copyright>Hubert Moszka Northwood, 2020-2025</Copyright>
 
-		<NoWarn>EPC12</NoWarn>
+		<NoWarn>EPC12;ERP022</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup>
