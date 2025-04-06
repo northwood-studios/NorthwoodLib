@@ -11,7 +11,7 @@ public static class PlatformSettings
 	/// <summary>
 	/// Current library version
 	/// </summary>
-	internal const string VersionConst = "1.3.1";
+	internal const string VersionConst = "1.4.0";
 
 	/// <summary>
 	/// Returns the library version
