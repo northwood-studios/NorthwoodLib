@@ -24,13 +24,15 @@ public static partial class OperatingSystem
 			using (StreamReader sr = new(fs))
 				while (sr.ReadLine() is { } line)
 				{
-					line = line.Trim();
-					const string prettyname = "PRETTY_NAME=";
+					ReadOnlySpan<char> value = line.AsSpan().Trim();
 
-					if (!line.StartsWith(prettyname))
+					const string prettyname = "PRETTY_NAME=";
+					if (!value.StartsWith(prettyname))
 						continue;
 
-					name = $"{line[prettyname.Length..].Replace("\"", "").Trim()} {version}".Trim();
+					value = value[prettyname.Length..].Trim();
+
+					name = $"{value.Trim('"').Trim().ToString()} {version}".Trim();
 					return true;
 				}
 		}

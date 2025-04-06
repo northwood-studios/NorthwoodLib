@@ -109,20 +109,39 @@ public static unsafe partial class OperatingSystem
 	/// <param name="lpVersionInformation"><see cref="OSVERSIONINFO"/> that contains the version information about the currently running operating system.</param>
 	/// <returns>True on success</returns>
 	[DllImport(Kernel32, EntryPoint = "GetVersionExW", ExactSpelling = true, SetLastError = true)]
-	private static extern uint GetVersionFallback(OSVERSIONINFO* lpVersionInformation);
+	private static extern int GetVersionFallback(OSVERSIONINFO* lpVersionInformation);
 
 	/// <summary>
 	/// Retrieves the product type for the operating system on the local computer, and maps the type to the product types supported by the specified operating system.
 	/// <see href="https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getproductinfo"/>
 	/// </summary>
-	/// <param name="idwOSMajorVersiond">The major version number of the operating system.</param>
+	/// <param name="idwOSMajorVersion">The major version number of the operating system.</param>
 	/// <param name="dwOSMinorVersion">The minor version number of the operating system.</param>
 	/// <param name="dwSpMajorVersion">The major version number of the operating system service pack.</param>
 	/// <param name="dwSpMinorVersion">The minor version number of the operating system service pack.</param>
 	/// <param name="pdwReturnedProductType">The product type.</param>
 	/// <returns>A nonzero value on success. This function fails if one of the input parameters is invalid.</returns>
 	[DllImport(Kernel32, EntryPoint = "GetProductInfo", ExactSpelling = true)]
-	private static extern uint GetProductInfo(uint idwOSMajorVersiond, uint dwOSMinorVersion, uint dwSpMajorVersion, uint dwSpMinorVersion, uint* pdwReturnedProductType);
+	private static extern int GetProductInfo(uint idwOSMajorVersion, uint dwOSMinorVersion, uint dwSpMajorVersion, uint dwSpMinorVersion, uint* pdwReturnedProductType);
+
+	/// <summary>
+	/// Returns the architecture info on the process and operating system.
+	/// <see href="https://learn.microsoft.com/en-us/windows/win32/api/wow64apiset/nf-wow64apiset-iswow64process2"/>
+	/// </summary>
+	/// <param name="process">Target process</param>
+	/// <param name="processArchitecture">Process architecture</param>
+	/// <param name="systemArchitecture">System architecture</param>
+	/// <returns>A nonzero value on success.</returns>
+	[DllImport(Kernel32, EntryPoint = "IsWow64Process2", ExactSpelling = true)]
+	private static extern int GetArchitecture(void* process, ushort* processArchitecture, ushort* systemArchitecture);
+
+	/// <summary>
+	/// Retrieves a pseudo handle for the current process.
+	/// <see href="https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess"/>
+	/// </summary>
+	/// <returns>A pseudo handle to the current process.</returns>
+	[DllImport(Kernel32, EntryPoint = "GetCurrentProcess", ExactSpelling = true)]
+	private static extern void* GetCurrentProcess();
 #pragma warning restore IDE1006
 	// ReSharper restore InconsistentNaming
 
@@ -207,13 +226,6 @@ public static unsafe partial class OperatingSystem
 
 		if (!string.IsNullOrWhiteSpace(servicePack))
 			nameBuilder.Append($" {servicePack}");
-
-		int systemBits = Environment.Is64BitOperatingSystem ? 64 : 32;
-		int processBits = sizeof(nuint) * 8;
-
-		nameBuilder.Append(systemBits == processBits ?
-			$" {systemBits}bit" :
-			$" {systemBits}bit Process: {processBits}bit");
 
 		name = StringBuilderPool.Shared.ToStringReturn(nameBuilder).Trim();
 		// ReSharper restore HeapView.BoxingAllocation
@@ -541,5 +553,54 @@ public static unsafe partial class OperatingSystem
 		}
 
 		return new string((char*) data);
+	}
+
+	/// <summary>
+	/// Checks whether Windows provides accurate architecture info.
+	/// </summary>
+	/// <param name="processArchitecture">Process architecture.</param>
+	/// <param name="systemArchitecture">System architecture.</param>
+	/// <returns>Whether Windows provides accurate architecture info.</returns>
+	internal static bool TryGetWindowsArchitecture(out Architecture processArchitecture, out Architecture systemArchitecture)
+	{
+		processArchitecture = 0;
+		systemArchitecture = 0;
+
+		if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			return false;
+
+		try
+		{
+			ushort processArch = 0;
+			ushort systemArch = 0;
+			if (GetArchitecture(GetCurrentProcess(), &processArch, &systemArch) != 0)
+			{
+				systemArchitecture = FromWindowsArch(systemArch);
+				processArchitecture = processArch == 0 ? systemArchitecture : FromWindowsArch(processArch);
+				return true;
+			}
+		}
+		catch
+		{
+			// ignore
+		}
+
+		return false;
+
+		Architecture FromWindowsArch(ushort arch)
+		{
+			// from https://learn.microsoft.com/en-us/windows/win32/sysinfo/image-file-machine-constants
+			return arch switch
+			{
+				0x014c => Architecture.X86,
+				0x01c0 => Architecture.Arm,
+				0x01c2 => Architecture.Arm,
+				0x01c4 => Architecture.Arm,
+				0x01F0 => (Architecture) 8, // PowerPC LE
+				0x8664 => Architecture.X64,
+				0xAA64 => Architecture.Arm64,
+				_ => throw new PlatformNotSupportedException()
+			};
+		}
 	}
 }

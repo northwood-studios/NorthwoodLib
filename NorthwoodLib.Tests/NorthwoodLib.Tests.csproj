@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
-		<LangVersion>preview</LangVersion>
+		<TargetFramework>net9.0</TargetFramework>
+		<LangVersion>13</LangVersion>
 		<RootNamespace>NorthwoodLib.Tests</RootNamespace>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<IsPackable>false</IsPackable>

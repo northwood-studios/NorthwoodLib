@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
-		<LangVersion>12</LangVersion>
+		<LangVersion>13</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace>NorthwoodLib</RootNamespace>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -14,24 +14,27 @@
 		<Description>NorthwoodLib</Description>
 		<Company>Hubert Moszka Northwood</Company>
 		<Authors>Hubert Moszka Northwood</Authors>
-		<Copyright>Hubert Moszka Northwood, 2020-2024</Copyright>
+		<Copyright>Hubert Moszka Northwood, 2020-2025</Copyright>
+
+		<NoWarn>EPC12;ERP022</NoWarn>
 	</PropertyGroup>
-	
+
 	<PropertyGroup>
 		<!-- Disable automatic generation of version attribute -->
 		<GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
 		<GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
 		<GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
 	</PropertyGroup>
-	
+
 	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
 			<_Parameter1>$(AssemblyName).Tests</_Parameter1>
 		</AssemblyAttribute>
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
+		<PackageReference Include="System.Text.Json" Version="9.0.3" />
 		<PackageReference Include="zabszk.DnsClient" Version="1.0.1" />
 		<PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
 		<PackageReference Include="ZXing.Net" Version="0.16.10" />
@@ -39,12 +42,28 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Unity.Analyzers" Version="1.22.0">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.7.0-beta.1">
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		  <PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="ErrorProne.NET.Structs" Version="0.6.1-beta.1">
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		  <PrivateAssets>all</PrivateAssets>
+		</PackageReference>
 	</ItemGroup>
-	
+
 	<PropertyGroup>
 		<PolySharpUsePublicAccessibilityForGeneratedTypes>true</PolySharpUsePublicAccessibilityForGeneratedTypes>
 	</PropertyGroup>
-	
+
 	<Target Name="CopyReferenceFilesBuild" BeforeTargets="Build">
 		<ItemGroup>
 			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" Exclude="%(Reference.RelativeDir)netstandard.xml" />
@@ -52,7 +71,7 @@
 		<Message Text="Copying reference files to $(OutputPath)" Importance="High" />
 		<Copy SourceFiles="@(ReferenceFiles)" DestinationFolder="$(OutputPath)" Condition="Exists('%(RootDir)%(Directory)%(Filename)%(Extension)')" />
 	</Target>
-	
+
 	<Target Name="CopyReferenceFilesPublish" BeforeTargets="Publish">
 		<ItemGroup>
 			<ReferenceFiles Include="%(Reference.RelativeDir)%(Reference.Filename).xml;%(Reference.RelativeDir)%(Reference.Filename).pdb" Exclude="%(Reference.RelativeDir)netstandard.xml" />
