@@ -57,9 +57,10 @@ public class OperatingSystemTest(ITestOutputHelper output) : LoggingTest(output)
 	[Fact]
 	public unsafe void ArchitectureTest()
 	{
-		if (OperatingSystem.Version >= new Version(10, 0, 6299))
+		bool fetchedNative = OperatingSystem.TryGetWindowsArchitecture(out Architecture processArchitecture, out Architecture systemArchitecture);
+		Assert.Equal(System.OperatingSystem.IsWindows() && OperatingSystem.Version >= new Version(10, 0, 6299), fetchedNative);
+		if (fetchedNative)
 		{
-			Assert.True(OperatingSystem.TryGetWindowsArchitecture(out Architecture processArchitecture, out Architecture systemArchitecture));
 			Assert.Equal(RuntimeInformation.ProcessArchitecture, processArchitecture);
 			Assert.Equal(RuntimeInformation.OSArchitecture, systemArchitecture);
 		}
