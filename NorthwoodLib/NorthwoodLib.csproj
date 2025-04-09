@@ -35,7 +35,7 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.4" />
 		<PackageReference Include="System.Collections.Immutable" Version="9.0.3" />
-		<PackageReference Include="System.IO.Pipelines" Version="9.0.3" />
+		<PackageReference Include="System.IO.Pipelines" Version="9.0.4" />
 		<PackageReference Include="System.Text.Encodings.Web" Version="9.0.3" />
 		<PackageReference Include="System.Text.Json" Version="9.0.3" />
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
