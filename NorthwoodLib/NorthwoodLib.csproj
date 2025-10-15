@@ -33,11 +33,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.4" />
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.10" />
 		<PackageReference Include="System.Collections.Immutable" Version="9.0.4" />
-		<PackageReference Include="System.IO.Pipelines" Version="9.0.4" />
-		<PackageReference Include="System.Text.Encodings.Web" Version="9.0.4" />
-		<PackageReference Include="System.Text.Json" Version="9.0.4" />
+		<PackageReference Include="System.IO.Pipelines" Version="9.0.10" />
+		<PackageReference Include="System.Text.Encodings.Web" Version="9.0.10" />
+		<PackageReference Include="System.Text.Json" Version="9.0.10" />
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
 		<PackageReference Include="zabszk.DnsClient" Version="1.0.1" />
 		<PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
