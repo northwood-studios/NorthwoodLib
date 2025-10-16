@@ -33,14 +33,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.4" />
-		<PackageReference Include="System.Collections.Immutable" Version="9.0.4" />
-		<PackageReference Include="System.IO.Pipelines" Version="9.0.4" />
-		<PackageReference Include="System.Text.Encodings.Web" Version="9.0.4" />
-		<PackageReference Include="System.Text.Json" Version="9.0.4" />
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.10" />
+		<PackageReference Include="System.Collections.Immutable" Version="9.0.10" />
+		<PackageReference Include="System.IO.Pipelines" Version="9.0.10" />
+		<PackageReference Include="System.Text.Encodings.Web" Version="9.0.10" />
+		<PackageReference Include="System.Text.Json" Version="9.0.10" />
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
 		<PackageReference Include="zabszk.DnsClient" Version="1.0.1" />
-		<PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
+		<PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
 		<PackageReference Include="ZXing.Net" Version="0.16.10" />
 		<PackageReference Include="PolySharp" Version="1.15.0">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -50,7 +50,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Unity.Analyzers" Version="1.22.0">
+		<PackageReference Include="Microsoft.Unity.Analyzers" Version="1.25.0">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
