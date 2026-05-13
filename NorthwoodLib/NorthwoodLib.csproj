@@ -36,7 +36,7 @@
 		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.7" />
 		<PackageReference Include="System.Collections.Immutable" Version="10.0.7" />
 		<PackageReference Include="System.IO.Pipelines" Version="10.0.7" />
-		<PackageReference Include="System.Text.Encodings.Web" Version="10.0.7" />
+		<PackageReference Include="System.Text.Encodings.Web" Version="10.0.8" />
 		<PackageReference Include="System.Text.Json" Version="10.0.7" />
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
 		<PackageReference Include="zabszk.DnsClient" Version="1.0.1" />
