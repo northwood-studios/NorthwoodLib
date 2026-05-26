@@ -42,7 +42,7 @@
 		<PackageReference Include="zabszk.DnsClient" Version="1.0.1" />
 		<PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
 		<PackageReference Include="ZXing.Net" Version="0.16.11" />
-		<PackageReference Include="PolySharp" Version="1.15.0">
+		<PackageReference Include="PolySharp" Version="1.16.0">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
