@@ -46,9 +46,9 @@ public class OperatingSystemTest(ITestOutputHelper output) : LoggingTest(output)
 			return;
 
 		Version version = OperatingSystem.Version;
-		OperatingSystem.TryCheckWindowsFileVersion(out Version v, OperatingSystem.GetWindowsRegistryBuild());
+		OperatingSystem.TryGetWindowsRegistryVersion(out Version v);
 		Logger.WriteLine(version.ToString());
-		Logger.WriteLine(v.ToString());
+		Logger.WriteLine(v?.ToString());
 		Assert.Equal(version.Major, v.Major);
 		Assert.Equal(version.Minor, v.Minor);
 		Assert.Equal(version.Build, v.Build);

@@ -11,7 +11,7 @@ public static class PlatformSettings
 	/// <summary>
 	/// Current library version
 	/// </summary>
-	internal const string VersionConst = "1.4.0";
+	internal const string VersionConst = "1.5.0";
 
 	/// <summary>
 	/// Returns the library version
@@ -21,7 +21,7 @@ public static class PlatformSettings
 	/// <summary>
 	/// Logs all messages from the code
 	/// </summary>
-	public static event Action<string, LogType> Logged;
+	public static event Action<string, LogType>? Logged;
 
 	/// <summary>
 	/// Fires <see cref="Logged"/> with provided data

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using NorthwoodLib.Logging;
 
@@ -12,29 +13,31 @@ public static partial class OperatingSystem
 	/// <param name="version">OS version</param>
 	/// <param name="name">Used Linux distribution</param>
 	/// <returns>True if operation was successful</returns>
-	private static bool TryGetUnixOs(out Version version, out string name)
+	private static bool TryGetUnixOs(out Version version, [NotNullWhen(true)] out string? name)
 	{
 		version = Environment.OSVersion.Version;
+
 		// linux distributions store info about themselves here
 		const string osrelease = "/etc/os-release";
 
 		try
 		{
-			using (FileStream fs = new(osrelease, FileMode.Open, FileAccess.Read, FileShare.Read))
-			using (StreamReader sr = new(fs))
-				while (sr.ReadLine() is { } line)
-				{
-					ReadOnlySpan<char> value = line.AsSpan().Trim();
+			using FileStream fs = new(osrelease, FileMode.Open, FileAccess.Read, FileShare.Read);
+			using StreamReader sr = new(fs);
 
-					const string prettyname = "PRETTY_NAME=";
-					if (!value.StartsWith(prettyname))
-						continue;
+			while (sr.ReadLine() is { } line)
+			{
+				ReadOnlySpan<char> value = line.AsSpan().Trim();
 
-					value = value[prettyname.Length..].Trim();
+				const string prettyname = "PRETTY_NAME=";
+				if (!value.StartsWith(prettyname))
+					continue;
 
-					name = $"{value.Trim('"').Trim().ToString()} {version}".Trim();
-					return true;
-				}
+				value = value[prettyname.Length..].TrimStart().Trim('"').Trim();
+
+				name = $"{value.ToString()} {version.PrintVersion()}".TrimEnd();
+				return true;
+			}
 		}
 		catch (FileNotFoundException)
 		{

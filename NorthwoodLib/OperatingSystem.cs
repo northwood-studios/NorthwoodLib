@@ -41,12 +41,18 @@ public static partial class OperatingSystem
 
 	static OperatingSystem()
 	{
-		UsesNativeData = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ?
-			TryGetWindowsVersion(out Version version, out string os) :
-			TryGetUnixOs(out version, out os);
-
-		Version = UsesNativeData ? version : Environment.OSVersion.Version;
-		VersionString = UsesNativeData ? os : $"{Environment.OSVersion.VersionString} {Environment.OSVersion.ServicePack}".Trim();
+		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+		{
+			GetWindowsVersion(out Version, out VersionString);
+			UsesNativeData = true;
+		}
+		else if (TryGetUnixOs(out Version, out VersionString!))
+			UsesNativeData = true;
+		else
+		{
+			Version = Environment.OSVersion.Version;
+			VersionString = $"{Environment.OSVersion.VersionString} {Environment.OSVersion.ServicePack}".Trim();
+		}
 
 		if (!TryGetWindowsArchitecture(out ProcessArchitecture, out SystemArchitecture))
 		{
@@ -61,5 +67,15 @@ public static partial class OperatingSystem
 #pragma warning disable 618
 		UsesWine = WineInfo.UsesWine;
 #pragma warning restore 618
+	}
+
+	private static string PrintVersion(this Version? version)
+	{
+		if (version == null)
+			return "(null)";
+
+		string revisionPart = version.Revision > 0 ? $".{version.Revision}" : "";
+		string buildPart = version.Build > 0 ? $".{version.Build}{revisionPart}" : "";
+		return $"{version.Major}.{version.Minor}{buildPart}";
 	}
 }

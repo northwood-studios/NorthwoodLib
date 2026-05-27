@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 using NorthwoodLib.Logging;
 
 namespace NorthwoodLib;
@@ -12,6 +13,127 @@ namespace NorthwoodLib;
 public static unsafe class WineInfo
 {
 	private const string Ntdll = "ntdll";
+
+	/// <summary>
+	/// Informs if user uses Wine. Detection isn't fully reliable so don't rely on this for anything but diagnostics
+	/// </summary>
+	public static readonly bool UsesWine;
+
+	/// <summary>
+	/// Informs if user uses Proton. Detection isn't fully reliable so don't rely on this for anything but diagnostics
+	/// </summary>
+	public static readonly bool UsesProton;
+
+	/// <summary>
+	/// Returns used Wine Version
+	/// </summary>
+	public static readonly string? WineVersion;
+
+	/// <summary>
+	/// Returns used Wine Staging patches
+	/// </summary>
+	[Obsolete("Always returns null since Wine removed the API")]
+	public static readonly string? WinePatches = null;
+
+	/// <summary>
+	/// Returns used Wine host
+	/// </summary>
+	public static readonly string? WineHost;
+
+	static WineInfo()
+	{
+		if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			// Wine will always report as Windows
+			return;
+
+		string? wineVersion = GetWineVersion(out string? pinvokeError);
+
+		if (!string.IsNullOrWhiteSpace(wineVersion))
+		{
+			WineVersion = $"Wine {wineVersion}";
+			UsesWine = true;
+		}
+
+		if (ParseDll(ref UsesWine, ref UsesProton))
+		{
+			// Wine hidden in winecfg
+			WineVersion = "Wine Hidden";
+			PlatformSettings.Log("Detected hidden Wine", LogType.Debug);
+		}
+		else if (!UsesWine)
+		{
+			// not using Wine, ignore
+			PlatformSettings.Log($"Wine not detected: {pinvokeError}", LogType.Debug);
+			return;
+		}
+
+		string? wineBuild = GetWineBuild();
+		if (!string.IsNullOrWhiteSpace(wineBuild))
+			WineVersion = wineBuild;
+
+		if (UsesProton)
+			WineVersion = $"Proton based on {WineVersion}";
+
+		WineHost = GetHostVersion();
+
+		if (!string.IsNullOrWhiteSpace(WineHost))
+			WineVersion += $" Host: {WineHost}";
+
+		WineVersion = WineVersion!.Trim();
+
+		PlatformSettings.Log($"{WineVersion} detected", LogType.Info);
+	}
+
+	private static string? GetWineVersion(out string? pinvokeError)
+	{
+		pinvokeError = null;
+		try
+		{
+			// this will fail on Windows or when user disables exporting wine_get_version
+			return Marshal.PtrToStringUTF8((nint) GetWineVersion());
+		}
+		catch (Exception exception)
+		{
+			pinvokeError = exception.Message;
+		}
+
+		return null;
+	}
+
+	private static string? GetWineBuild()
+	{
+		try
+		{
+			return Marshal.PtrToStringUTF8((nint) GetWineBuildId());
+		}
+		catch (Exception ex)
+		{
+			PlatformSettings.Log($"Wine build not detected: {ex.Message}", LogType.Debug);
+		}
+
+		return null;
+	}
+
+	private static string? GetHostVersion()
+	{
+		try
+		{
+			byte* sysnamePtr = null;
+			byte* releasePtr = null;
+			GetWineHostVersion(&sysnamePtr, &releasePtr);
+
+			string? sysname = Marshal.PtrToStringUTF8((nint) sysnamePtr)?.TrimEnd();
+			string? release = Marshal.PtrToStringUTF8((nint) releasePtr)?.TrimStart();
+			if (!string.IsNullOrEmpty(sysname) || !string.IsNullOrEmpty(release))
+				return $"{sysname} {release}".Trim();
+		}
+		catch (Exception ex)
+		{
+			PlatformSettings.Log($"Wine host not detected: {ex.Message}", LogType.Debug);
+		}
+
+		return null;
+	}
 
 	/// <summary>
 	/// Returns used Wine version <see href="https://wiki.winehq.org/Developer_FAQ#How_can_I_detect_Wine.3F"/>
@@ -34,135 +156,42 @@ public static unsafe class WineInfo
 	[DllImport(Ntdll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "wine_get_host_version")]
 	private static extern void GetWineHostVersion(byte** sysname, byte** release);
 
-	/// <summary>
-	/// Informs if user uses Wine. Detection isn't fully reliable so don't rely on this for anything but diagnostics
-	/// </summary>
-	public static readonly bool UsesWine;
-
-	/// <summary>
-	/// Informs if user uses Proton. Detection isn't fully reliable so don't rely on this for anything but diagnostics
-	/// </summary>
-	public static readonly bool UsesProton;
-
-	/// <summary>
-	/// Returns used Wine Version
-	/// </summary>
-	public static readonly string WineVersion;
-
-	/// <summary>
-	/// Returns used Wine Staging patches
-	/// </summary>
-	[Obsolete("Always returns null since Wine removed the API")]
-	public static readonly string WinePatches = null;
-
-	/// <summary>
-	/// Returns used Wine host
-	/// </summary>
-	public static readonly string WineHost;
-
-	static WineInfo()
+	private static bool ParseDll(ref bool usesWine, ref bool usesProton)
 	{
-		if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+		bool hidden = false;
+		try
 		{
-			// Wine will always report as Windows
-			UsesWine = false;
-			WineVersion = null;
-			return;
-		}
+			using MemoryMappedFile kernelBase = MemoryMappedFile.CreateFromFile(Path.Combine(Environment.SystemDirectory, "kernelbase.dll"),
+				FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
+			using MemoryMappedViewAccessor kernelAccessor = kernelBase.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
+			using SafeMemoryMappedViewHandle viewHandle = kernelAccessor.SafeMemoryMappedViewHandle;
 
-		static MemoryMappedFile GetKernelBaseMemoryMap()
-		{
+			byte* ptr = null;
+			viewHandle.AcquirePointer(ref ptr);
 			try
 			{
-				return MemoryMappedFile.CreateFromFile(Path.Combine(Environment.SystemDirectory, "kernelbase.dll"),
-					FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
+				ReadOnlySpan<byte> bytes = new(ptr, (int) Math.Min(viewHandle.ByteLength, 20 * 1024 * 1024));
+				if (!usesWine)
+				{
+					usesWine = bytes.IndexOf("Wine "u8) >= 0;
+					hidden = true;
+				}
+
+				if (!usesWine)
+					return false;
+
+				usesProton = bytes.IndexOf("Proton "u8) >= 0;
 			}
-			catch
+			finally
 			{
-				return null;
+				viewHandle.ReleasePointer();
 			}
 		}
-
-		using MemoryMappedFile kernelBase = GetKernelBaseMemoryMap();
-		using MemoryMappedViewAccessor kernelAccessor = kernelBase?.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
-		byte* bytes = null;
-		kernelAccessor?.SafeMemoryMappedViewHandle.AcquirePointer(ref bytes);
-		ReadOnlySpan<byte> kernelBytes = kernelBase == null ? default :
-			new ReadOnlySpan<byte>(bytes, (int) Math.Min(kernelAccessor.SafeMemoryMappedViewHandle.ByteLength, 20 * 1024 * 1024));
-
-		try
+		catch (Exception exception)
 		{
-			// this will fail on Windows or when user disables exporting wine_get_version
-			string wineVersion = Marshal.PtrToStringAnsi((nint) GetWineVersion());
-
-			if (string.IsNullOrWhiteSpace(wineVersion))
-			{
-				UsesWine = false;
-				WineVersion = null;
-				return;
-			}
-
-			UsesWine = true;
-			WineVersion = $"Wine {wineVersion}";
-		}
-		catch (Exception ex)
-		{
-			if (kernelBytes.IndexOf("Wine "u8) < 0)
-			{
-				// not using Wine, ignore
-				PlatformSettings.Log($"Wine not detected: {ex.Message}", LogType.Debug);
-				UsesWine = false;
-				WineVersion = null;
-				return;
-			}
-
-			// Wine hidden in winecfg
-			PlatformSettings.Log("Detected hidden Wine", LogType.Debug);
-			UsesWine = true;
-			WineVersion = "Wine Hidden";
+			PlatformSettings.Log($"Error checking OS files for Wine: {exception}", LogType.Error);
 		}
 
-		try
-		{
-			string wineBuild = Marshal.PtrToStringAnsi((nint) GetWineBuildId());
-
-			if (!string.IsNullOrWhiteSpace(wineBuild))
-				WineVersion = wineBuild;
-		}
-		catch (Exception ex)
-		{
-			PlatformSettings.Log($"Wine build not detected: {ex.Message}", LogType.Debug);
-		}
-
-		UsesProton = kernelBytes.IndexOf("Proton "u8) >= 0;
-		if (UsesProton)
-			WineVersion = $"Proton based on {WineVersion}";
-
-		kernelAccessor?.SafeMemoryMappedViewHandle.ReleasePointer();
-
-		try
-		{
-			byte* sysnamePtr = null;
-			byte* releasePtr = null;
-			GetWineHostVersion(&sysnamePtr, &releasePtr);
-			string sysname = Marshal.PtrToStringAnsi((nint) sysnamePtr)?.Trim() ?? "";
-			string release = Marshal.PtrToStringAnsi((nint) releasePtr)?.Trim() ?? "";
-			if (sysname != "" || release != "")
-			{
-				WineHost = sysname;
-				if (!string.IsNullOrWhiteSpace(release))
-					WineHost += $" {release}";
-				WineHost = WineHost.Trim();
-				WineVersion += $" Host: {WineHost}";
-			}
-		}
-		catch (Exception ex)
-		{
-			PlatformSettings.Log($"Wine host not detected: {ex.Message}", LogType.Debug);
-		}
-
-		WineVersion = WineVersion.Trim();
-
-		PlatformSettings.Log($"{WineVersion} detected", LogType.Info);
+		return hidden;
 	}
 }

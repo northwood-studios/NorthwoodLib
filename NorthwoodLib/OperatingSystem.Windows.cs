@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
 using NorthwoodLib.Logging;
@@ -11,215 +10,81 @@ namespace NorthwoodLib;
 
 public static unsafe partial class OperatingSystem
 {
-	// ReSharper disable InconsistentNaming
-	// ReSharper disable FieldCanBeMadeReadOnly.Local
-#pragma warning disable IDE1006
-#pragma warning disable IDE0044
-	/// <summary>
-	/// Managed version of <see href="https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw"/>
-	/// </summary>
-	[StructLayout(LayoutKind.Sequential)]
-	private struct OSVERSIONINFO
-	{
-		/// <summary>
-		/// The marshalled size, in bytes, of an <see cref="OSVERSIONINFO"/> structure.
-		/// This member must be set to <see cref="Marshal.SizeOf{OSVERSIONINFO}()"/> before the structure is used with <see cref="GetVersion"/>.
-		/// </summary>
-		public uint dwOSVersionInfoSize;
-
-		/// <summary>
-		/// The major version number of the operating system.
-		/// </summary>
-		public uint dwMajorVersion;
-
-		/// <summary>
-		/// The minor version number of the operating system.
-		/// </summary>
-		public uint dwMinorVersion;
-
-		/// <summary>
-		/// The build number of the operating system.
-		/// </summary>
-		public uint dwBuildNumber;
-
-		/// <summary>
-		/// The operating system platform. For Win32 on NT-based operating systems, RtlGetVersion returns the value VER_PLATFORM_WIN32_NT.
-		/// </summary>
-		private uint dwPlatformId;
-
-		/// <summary>
-		/// The service-pack version string.
-		/// </summary>
-		public fixed ushort szCSDVersion[128];
-
-		/// <summary>
-		/// The major version number of the latest service pack installed on the system.
-		/// </summary>
-		public ushort wServicePackMajor;
-
-		/// <summary>
-		/// The minor version number of the latest service pack installed on the system.
-		/// </summary>
-		public ushort wServicePackMinor;
-
-		/// <summary>
-		/// The product suites available on the system.
-		/// </summary>
-		private ushort wSuiteMask;
-
-		/// <summary>
-		/// The product type.
-		/// </summary>
-		public byte wProductType;
-
-		/// <summary>
-		/// Reserved for future use.
-		/// </summary>
-		private byte wReserved;
-	}
-#pragma warning restore IDE0044
-	// ReSharper restore FieldCanBeMadeReadOnly.Local
-
-	private const string Ntdll = "ntdll";
-	private const string Kernel32 = "kernel32";
+	private const nint Hklm = -2147483646;
 	private const string RegistryPath = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion";
 
-	/// <summary>
-	/// Returns version information about the currently running operating system.
-	/// <see href="https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-rtlgetversion"/>
-	/// </summary>
-	/// <param name="lpVersionInformation"><see cref="OSVERSIONINFO"/> that contains the version information about the currently running operating system.</param>
-	/// <returns><see cref="GetVersion"/> returns STATUS_SUCCESS.</returns>
-	[DllImport(Ntdll, EntryPoint = "RtlGetVersion", ExactSpelling = true)]
-	private static extern uint GetVersion(OSVERSIONINFO* lpVersionInformation);
-
-	/// <summary>
-	/// Converts the specified NTSTATUS code to its equivalent system error code.
-	/// <see href="https://docs.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-rtlntstatustodoserror"/>
-	/// </summary>
-	/// <param name="status">The NTSTATUS code to be converted.</param>
-	/// <returns>Corresponding system error code.</returns>
-	[DllImport(Ntdll, EntryPoint = "RtlNtStatusToDosError", ExactSpelling = true)]
-	private static extern int NtStatusToDosCode(uint status);
-
-	/// <summary>
-	/// Returns version information about the currently running operating system.
-	/// <see href="https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getversionexw"/>
-	/// </summary>
-	/// <param name="lpVersionInformation"><see cref="OSVERSIONINFO"/> that contains the version information about the currently running operating system.</param>
-	/// <returns>True on success</returns>
-	[DllImport(Kernel32, EntryPoint = "GetVersionExW", ExactSpelling = true, SetLastError = true)]
-	private static extern int GetVersionFallback(OSVERSIONINFO* lpVersionInformation);
-
-	/// <summary>
-	/// Retrieves the product type for the operating system on the local computer, and maps the type to the product types supported by the specified operating system.
-	/// <see href="https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-getproductinfo"/>
-	/// </summary>
-	/// <param name="idwOSMajorVersion">The major version number of the operating system.</param>
-	/// <param name="dwOSMinorVersion">The minor version number of the operating system.</param>
-	/// <param name="dwSpMajorVersion">The major version number of the operating system service pack.</param>
-	/// <param name="dwSpMinorVersion">The minor version number of the operating system service pack.</param>
-	/// <param name="pdwReturnedProductType">The product type.</param>
-	/// <returns>A nonzero value on success. This function fails if one of the input parameters is invalid.</returns>
-	[DllImport(Kernel32, EntryPoint = "GetProductInfo", ExactSpelling = true)]
-	private static extern int GetProductInfo(uint idwOSMajorVersion, uint dwOSMinorVersion, uint dwSpMajorVersion, uint dwSpMinorVersion, uint* pdwReturnedProductType);
-
-	/// <summary>
-	/// Returns the architecture info on the process and operating system.
-	/// <see href="https://learn.microsoft.com/en-us/windows/win32/api/wow64apiset/nf-wow64apiset-iswow64process2"/>
-	/// </summary>
-	/// <param name="process">Target process</param>
-	/// <param name="processArchitecture">Process architecture</param>
-	/// <param name="systemArchitecture">System architecture</param>
-	/// <returns>A nonzero value on success.</returns>
-	[DllImport(Kernel32, EntryPoint = "IsWow64Process2", ExactSpelling = true)]
-	private static extern int GetArchitecture(void* process, ushort* processArchitecture, ushort* systemArchitecture);
-
-	/// <summary>
-	/// Retrieves a pseudo handle for the current process.
-	/// <see href="https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocess"/>
-	/// </summary>
-	/// <returns>A pseudo handle to the current process.</returns>
-	[DllImport(Kernel32, EntryPoint = "GetCurrentProcess", ExactSpelling = true)]
-	private static extern void* GetCurrentProcess();
-#pragma warning restore IDE1006
-	// ReSharper restore InconsistentNaming
-
-	private static bool TryGetWindowsVersion(out Version version, out string name)
+	private static void GetWindowsVersion(out Version version, out string name)
 	{
-		StringBuilder nameBuilder = StringBuilderPool.Shared.Rent(WineInfo.UsesWine ? $"{WineInfo.WineVersion} " : "");
-		version = null;
-
-		bool server = false;
-		string servicePack = null;
-		Version servicePackVersion = null;
-
-		OSVERSIONINFO osVersionInfo = new()
+		if (TryGetVersion(false, out Version? winVersion, out bool server, out string? servicePack, out Version? servicePackVersion))
+			version = winVersion;
+		else if (TryGetVersion(true, out winVersion, out server, out servicePack, out servicePackVersion))
 		{
-			dwOSVersionInfoSize = (uint) sizeof(OSVERSIONINFO)
+			PlatformSettings.Log("Correcting system version using GetVersionExW", LogType.Warning);
+			version = winVersion;
+		}
+		else if (TryGetWindowsRegistryVersion(out Version? fileVersion))
+		{
+			PlatformSettings.Log("Correcting system version using registry data", LogType.Warning);
+			version = fileVersion;
+		}
+		else
+			version = Environment.OSVersion.Version;
+
+		servicePack ??= Environment.OSVersion.ServicePack;
+		servicePackVersion ??= !string.IsNullOrEmpty(servicePack) &&
+							   int.TryParse(servicePack.AsSpan(servicePack.Length - 1), out int spMajor) ? new Version(spMajor, 0) : null;
+
+		if (version.Revision <= 0 && TryGetHklmDword(RegistryPath, "UBR", out uint ubr) && ubr > 0)
+			version = new Version(version.Major, version.Minor, version.Build, (int) ubr);
+
+		name = CreateDescription(version, server, servicePackVersion, servicePack);
+	}
+
+	private static bool TryGetVersion(bool useLegacy, [NotNullWhen(true)] out Version? version, out bool server, [NotNullWhen(true)] out string? servicePack,
+		[NotNullWhen(true)] out Version? servicePackVersion)
+	{
+		OsVersionInfo osVersionInfo = new()
+		{
+			dwOSVersionInfoSize = (uint) sizeof(OsVersionInfo)
 		};
 
 		try
 		{
-			uint status = GetVersion(&osVersionInfo);
-			if (status != 0)
-				throw new Win32Exception(NtStatusToDosCode(status));
+			if (useLegacy)
+			{
+				int status = GetVersionFallback(&osVersionInfo);
+				if (status != 0)
+					throw new Win32Exception();
+			}
+			else
+			{
+				uint status = GetVersion(&osVersionInfo);
+				if (status != 0)
+					throw new Win32Exception(NtStatusToDosCode(status));
+			}
 			ParseWindowsVersion(osVersionInfo, out version, out server, out servicePack, out servicePackVersion);
 
+			if (IsValidWindowsVersion(version))
+				return true;
 		}
 		catch (Exception ex)
 		{
 			PlatformSettings.Log($"Failed to get Windows version! {ex.Message}", LogType.Warning);
 		}
 
-		if (!IsValidWindowsVersion(version))
-			try
-			{
-				if (GetVersionFallback(&osVersionInfo) == 0)
-					throw new Win32Exception();
-				ParseWindowsVersion(osVersionInfo, out version, out server, out servicePack, out servicePackVersion);
-			}
-			catch (Exception ex)
-			{
-				PlatformSettings.Log($"Failed to correct Windows version with GetVersionExW! {ex.Message}", LogType.Warning);
-			}
+		version = null;
+		server = false;
+		servicePack = null;
+		servicePackVersion = null;
+		return false;
+	}
 
-		if (!IsValidWindowsVersion(version))
-			try
-			{
-				if (TryCheckWindowsFileVersion(out Version fileVersion, GetWindowsRegistryBuild()))
-				{
-					PlatformSettings.Log(
-						$"Correcting system version using files from {version.PrintVersion()} to {fileVersion.Major}.{fileVersion.Minor}.{fileVersion.Build}",
-						LogType.Warning);
-					version = fileVersion;
-				}
-			}
-			catch (Exception ex)
-			{
-				PlatformSettings.Log($"Failed to correct Windows version using files! {ex.Message}", LogType.Warning);
-			}
-
-		if (!IsValidWindowsVersion(version))
-			version = Environment.OSVersion.Version;
-
-		if (string.IsNullOrWhiteSpace(servicePack))
-			servicePack = Environment.OSVersion.ServicePack;
-
-		servicePackVersion ??= Environment.OSVersion.ServicePack switch
-		{
-			"Service Pack 1" => new Version(1, 0),
-			"Service Pack 2" => new Version(2, 0),
-			"Service Pack 3" => new Version(3, 0),
-			"Service Pack 4" => new Version(4, 0),
-			"Service Pack 5" => new Version(5, 0),
-			_ => null
-		};
-
-		// ReSharper disable HeapView.BoxingAllocation
+	private static string CreateDescription(Version version, bool server, Version? servicePackVersion, string? servicePack)
+	{
+		StringBuilder nameBuilder = StringBuilderPool.Shared.Rent(WineInfo.UsesWine ? $"{WineInfo.WineVersion} " : "");
 		nameBuilder.Append($"Windows {ProcessWindowsVersion(version, server, GetHklmString(RegistryPath, "DisplayVersion"))}");
 
-		string product = GetProductInfo(version, servicePackVersion);
+		string? product = GetProductInfo(version, servicePackVersion);
 
 		if (!string.IsNullOrWhiteSpace(product))
 			nameBuilder.Append($" {product}");
@@ -227,80 +92,7 @@ public static unsafe partial class OperatingSystem
 		if (!string.IsNullOrWhiteSpace(servicePack))
 			nameBuilder.Append($" {servicePack}");
 
-		name = StringBuilderPool.Shared.ToStringReturn(nameBuilder).Trim();
-		// ReSharper restore HeapView.BoxingAllocation
-		return true;
-	}
-
-	private static void ParseWindowsVersion(OSVERSIONINFO osVersionInfo, out Version version, out bool server, out string servicePack, out Version servicePackVersion)
-	{
-		version = new Version((int) osVersionInfo.dwMajorVersion, (int) osVersionInfo.dwMinorVersion, (int) osVersionInfo.dwBuildNumber);
-		// from https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw
-		server = osVersionInfo.wProductType != 1;
-		servicePack = new string((char*) osVersionInfo.szCSDVersion);
-		servicePackVersion = new Version(osVersionInfo.wServicePackMajor, osVersionInfo.wServicePackMinor);
-	}
-
-	/// <summary>
-	/// Attempts to retrieve the Windows Build from registry
-	/// </summary>
-	/// <returns>Parsed value if successful, <see langword="null"/> otherwise</returns>
-	internal static int? GetWindowsRegistryBuild()
-	{
-		return int.TryParse(GetHklmString(RegistryPath, "CurrentBuildNumber"), out int build) && build > 0
-			? build
-			: int.TryParse(GetHklmString(RegistryPath, "CurrentBuild"), out build) && build > 0
-				? build
-				: null;
-	}
-
-	/// <summary>
-	/// Fetches the Windows version from system files
-	/// </summary>
-	/// <param name="version">System version</param>
-	/// <param name="realBuild">Real build value if known</param>
-	/// <returns><see langword="true"/> if successful, <see langword="false"/> otherwise</returns>
-	internal static bool TryCheckWindowsFileVersion(out Version version, int? realBuild)
-	{
-		foreach (string file in (ReadOnlySpan<string>) [
-					 "cmd.exe",
-					 "conhost.exe",
-					 "dxdiag.exe",
-					 "msinfo32.exe",
-					 "msconfig.exe",
-					 "mspaint.exe",
-					 "notepad.exe",
-					 "winver.exe"
-				 ])
-		{
-			FileVersionInfo fileVersionInfo;
-
-			try
-			{
-				// use a system file to obtain the true version
-				fileVersionInfo = FileVersionInfo.GetVersionInfo(Path.Combine(Environment.SystemDirectory, file));
-			}
-			catch (FileNotFoundException)
-			{
-				continue;
-			}
-			catch (Exception ex)
-			{
-				PlatformSettings.Log($"Failed to get the version of {file}! {ex.Message}", LogType.Warning);
-				continue;
-			}
-
-			version = new Version(fileVersionInfo.FileMajorPart, fileVersionInfo.FileMinorPart, realBuild ?? fileVersionInfo.FileBuildPart);
-
-			if (!IsValidWindowsVersion(version))
-				version = new Version(fileVersionInfo.ProductMajorPart, fileVersionInfo.ProductMinorPart, realBuild ?? fileVersionInfo.ProductBuildPart);
-
-			if (IsValidWindowsVersion(version))
-				return true;
-		}
-
-		version = null;
-		return false;
+		return StringBuilderPool.Shared.ToStringReturn(nameBuilder).Trim();
 	}
 
 	private static bool IsValidWindowsVersion(Version version)
@@ -311,17 +103,48 @@ public static unsafe partial class OperatingSystem
 	private static bool IsValidWindowsVersion(int major, int minor)
 	{
 		// 6.2 is Windows 8, Windows 8.1 and 10 sometimes like to identify themselves as it
-		return major > 0 && minor >= 0 && !(major == 6 && minor == 2);
+		return major > 0 && minor >= 0 && (major != 6 || minor != 2);
 	}
 
-	private static string PrintVersion(this Version version)
+	private static void ParseWindowsVersion(OsVersionInfo osVersionInfo, out Version version, out bool server, out string servicePack, out Version servicePackVersion)
 	{
-		return version == null ? "(null)" : $"{version.Major}.{version.Minor}{(version.Build > 0 ? $".{version.Build}" : "")}";
+		version = new Version((int) osVersionInfo.dwMajorVersion, (int) osVersionInfo.dwMinorVersion, (int) osVersionInfo.dwBuildNumber);
+		// from https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw
+		server = osVersionInfo.wProductType != 1;
+		servicePack = new string((char*) osVersionInfo.szCSDVersion);
+		servicePackVersion = new Version(osVersionInfo.wServicePackMajor, osVersionInfo.wServicePackMinor);
 	}
 
-	private static string ProcessWindowsVersion(Version version, bool server, string displayVersion)
+	/// <summary>
+	/// Fetches the Windows version from registry
+	/// </summary>
+	/// <param name="version">System version</param>
+	/// <returns><see langword="true"/> if successful, <see langword="false"/> otherwise</returns>
+	internal static bool TryGetWindowsRegistryVersion([NotNullWhen(true)] out Version? version)
 	{
-		switch (version?.Major)
+		version = null;
+
+		if (TryGetHklmDword(RegistryPath, "CurrentMajorVersionNumber", out uint major) || major <= 0)
+			return false;
+
+		if (TryGetHklmDword(RegistryPath, "CurrentMinorVersionNumber", out uint minor))
+			return false;
+
+		if ((!int.TryParse(GetHklmString(RegistryPath, "CurrentBuildNumber"), out int build) || build <= 0) &&
+			(!int.TryParse(GetHklmString(RegistryPath, "CurrentBuild"), out build) || build <= 0))
+			return false;
+
+		version = new Version((int) major, (int) minor, build);
+		return true;
+	}
+
+	private static string ProcessWindowsVersion(Version version, bool server, string? displayVersion)
+	{
+		if (string.IsNullOrWhiteSpace(displayVersion))
+			displayVersion = null;
+
+		string? versionText = null;
+		switch (version.Major)
 		{
 			case 10 when version.Minor == 0 && server:
 				{
@@ -335,21 +158,22 @@ public static unsafe partial class OperatingSystem
 					};
 					string patch = displayVersion ?? version.Build switch
 					{
-						14393 => "1607",
-						16299 => "1709",
-						17134 => "1803",
-						17763 => "1809",
-						18362 => "1903",
-						18363 => "1909",
-						19041 => "2004",
-						19042 => "20H2",
-						20348 => "21H2",
-						25398 => "23H2",
-						26040 => "23H2",
 						26100 => "24H2",
+						26040 => "23H2",
+						25398 => "23H2",
+						20348 => "21H2",
+						19042 => "20H2",
+						19041 => "2004",
+						18363 => "1909",
+						18362 => "1903",
+						17763 => "1809",
+						17134 => "1803",
+						16299 => "1709",
+						14393 => "1607",
 						_ => $"build {version.Build}"
 					};
-					return $"Server {main} {patch}";
+					versionText = $"Server {main} {patch}";
+					break;
 				}
 			case 10 when version.Minor == 0:
 				{
@@ -360,63 +184,69 @@ public static unsafe partial class OperatingSystem
 					};
 					string patch = displayVersion ?? version.Build switch
 					{
-						10240 => "1507",
-						10586 => "1511",
-						14393 => "1607",
-						15063 => "1703",
-						16299 => "1709",
-						17134 => "1803",
-						17763 => "1809",
-						18362 => "1903",
-						18363 => "1909",
-						19041 => "2004",
-						19042 => "20H2",
-						19043 => "21H1",
-						19044 => "21H2",
-						19045 => "22H2",
-						22000 => "21H2",
-						22621 => "22H2",
-						22631 => "23H2",
+						26300 => "26H2",
+						28000 => "26H1",
+						26200 => "25H2",
 						26100 => "24H2",
+						22631 => "23H2",
+						22621 => "22H2",
+						22000 => "21H2",
+						19045 => "22H2",
+						19044 => "21H2",
+						19043 => "21H1",
+						19042 => "20H2",
+						19041 => "2004",
+						18363 => "1909",
+						18362 => "1903",
+						17763 => "1809",
+						17134 => "1803",
+						16299 => "1709",
+						15063 => "1703",
+						14393 => "1607",
+						10586 => "1511",
+						10240 => "1507",
 						_ => $"build {version.Build}"
 					};
-					return $"{main} {patch}";
+					versionText = $"{main} {patch}";
+					break;
 				}
 			case 6 when server:
 				{
-					switch (version.Minor)
+					versionText = version.Minor switch
 					{
-						case 3: return "Server 2012 R2";
-						case 2: return "Server 2012";
-						case 1: return "Server 2008 R2";
-						case 0: return "Server 2008";
-					}
+						3 => "Server 2012 R2",
+						2 => "Server 2012",
+						1 => "Server 2008 R2",
+						0 => "Server 2008",
+						_ => null
+					};
 					break;
 				}
 			case 6:
 				{
-					switch (version.Minor)
+					versionText = version.Minor switch
 					{
-						case 3: return "8.1";
-						case 2: return "8";
-						case 1: return "7";
-						case 0: return "Vista";
-					}
+						3 => "8.1",
+						2 => "8",
+						1 => "7",
+						0 => "Vista",
+						_ => null
+					};
 					break;
 				}
 		}
 
-		return version.PrintVersion();
+		return versionText ?? version.PrintVersion();
 	}
 
-	private static string GetProductInfo(Version osVersion, Version spVersion)
+	private static string? GetProductInfo(Version osVersion, Version? spVersion)
 	{
 		uint pdwReturnedProductType = 0;
 
 		try
 		{
 			if (GetProductInfo((uint) osVersion.Major, (uint) osVersion.Minor,
-					(uint) spVersion.Major, (uint) spVersion.Minor, &pdwReturnedProductType) == 0)
+					(uint) (spVersion?.Major ?? 0), (uint) (spVersion?.Minor ?? 0), &pdwReturnedProductType) == 0)
 				return null;
 		}
 		catch (Exception ex)
@@ -533,26 +363,23 @@ public static unsafe partial class OperatingSystem
 		};
 	}
 
-	private static string GetHklmString(string key, string value)
+	private static string? GetHklmString(string key, string value)
 	{
-		[DllImport("Advapi32", EntryPoint = "RegGetValueW", ExactSpelling = true)]
-		static extern int RegGetValue(nint hkey, ushort* key, ushort* value, uint flags, uint* type, void* data, uint* dataLength);
-
-		const nint hklm = -2147483646;
 		const uint sz = 0x00000002;
 
 		const int bufferSize = 8;
 		ushort* data = stackalloc ushort[bufferSize];
+		return GetRegistryValue(key, value, sz, data, bufferSize * sizeof(ushort)) ? null : new string((char*) data);
+	}
 
-		uint dataSize = bufferSize * sizeof(ushort);
-		fixed (char* keyPointer = key)
-		fixed (char* valuePointer = value)
-		{
-			if (RegGetValue(hklm, (ushort*) keyPointer, (ushort*) valuePointer, sz, null, data, &dataSize) != 0)
-				return null;
-		}
+	private static bool TryGetHklmDword(string key, string value, out uint result)
+	{
+		const uint dword = 0x00000018;
 
-		return new string((char*) data);
+		uint data = 0;
+		bool ret = GetRegistryValue(key, value, dword, &data, sizeof(uint));
+		result = data;
+		return ret;
 	}
 
 	/// <summary>
@@ -587,15 +414,13 @@ public static unsafe partial class OperatingSystem
 
 		return false;
 
-		Architecture FromWindowsArch(ushort arch)
+		static Architecture FromWindowsArch(ushort arch)
 		{
 			// from https://learn.microsoft.com/en-us/windows/win32/sysinfo/image-file-machine-constants
 			return arch switch
 			{
 				0x014c => Architecture.X86,
-				0x01c0 => Architecture.Arm,
-				0x01c2 => Architecture.Arm,
-				0x01c4 => Architecture.Arm,
+				0x01c0 or 0x01c2 or 0x01c4 => Architecture.Arm,
 				0x01F0 => (Architecture) 8, // PowerPC LE
 				0x8664 => Architecture.X64,
 				0xAA64 => Architecture.Arm64,
