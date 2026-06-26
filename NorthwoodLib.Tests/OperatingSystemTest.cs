@@ -46,9 +46,9 @@ public class OperatingSystemTest(ITestOutputHelper output) : LoggingTest(output)
 			return;
 
 		Version version = OperatingSystem.Version;
-		OperatingSystem.TryGetWindowsRegistryVersion(out Version v);
+		Assert.True(OperatingSystem.TryGetWindowsRegistryVersion(out Version v));
 		Logger.WriteLine(version.ToString());
-		Logger.WriteLine(v?.ToString());
+		Logger.WriteLine(v.ToString());
 		Assert.Equal(version.Major, v.Major);
 		Assert.Equal(version.Minor, v.Minor);
 		Assert.Equal(version.Build, v.Build);
@@ -58,7 +58,7 @@ public class OperatingSystemTest(ITestOutputHelper output) : LoggingTest(output)
 	public unsafe void ArchitectureTest()
 	{
 		bool fetchedNative = OperatingSystem.TryGetWindowsArchitecture(out Architecture processArchitecture, out Architecture systemArchitecture);
-		Assert.Equal(System.OperatingSystem.IsWindows() && OperatingSystem.Version >= new Version(10, 0, 6299), fetchedNative);
+		Assert.Equal(System.OperatingSystem.IsWindows() && OperatingSystem.Version >= new Version(10, 0, 16299), fetchedNative);
 		if (fetchedNative)
 		{
 			Assert.Equal(RuntimeInformation.ProcessArchitecture, processArchitecture);

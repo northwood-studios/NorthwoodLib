@@ -6,7 +6,7 @@ public static unsafe partial class OperatingSystem
 {
 	private const string Ntdll = "ntdll";
 	private const string Kernel32 = "kernel32";
-	private const string VersionDll = "version";
+	private const string Advapi32 = "Advapi32";
 
 	/// <summary>
 	/// Returns version information about the currently running operating system.
@@ -69,12 +69,12 @@ public static unsafe partial class OperatingSystem
 
 	private static bool GetRegistryValue(string key, string value, uint sz, void* data, uint dataSize)
 	{
-		[DllImport("Advapi32", EntryPoint = "RegGetValueW", ExactSpelling = true)]
+		[DllImport(Advapi32, EntryPoint = "RegGetValueW", ExactSpelling = true)]
 		static extern int RegGetValue(nint hkey, ushort* key, ushort* value, uint flags, uint* type, void* data, uint* dataLength);
 
 		fixed (char* keyPointer = key)
 		fixed (char* valuePointer = value)
-			return RegGetValue(Hklm, (ushort*) keyPointer, (ushort*) valuePointer, sz, null, data, &dataSize) != 0;
+			return RegGetValue(Hklm, (ushort*) keyPointer, (ushort*) valuePointer, sz, null, data, &dataSize) == 0;
 	}
 
 	/// <summary>

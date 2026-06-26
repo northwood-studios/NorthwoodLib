@@ -11,7 +11,7 @@ namespace NorthwoodLib;
 public static unsafe partial class OperatingSystem
 {
 	private const nint Hklm = -2147483646;
-	private const string RegistryPath = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion";
+	private const string CurrentVersion = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion";
 
 	private static void GetWindowsVersion(out Version version, out string name)
 	{
@@ -34,7 +34,7 @@ public static unsafe partial class OperatingSystem
 		servicePackVersion ??= !string.IsNullOrEmpty(servicePack) &&
 							   int.TryParse(servicePack.AsSpan(servicePack.Length - 1), out int spMajor) ? new Version(spMajor, 0) : null;
 
-		if (version.Revision <= 0 && TryGetHklmDword(RegistryPath, "UBR", out uint ubr) && ubr > 0)
+		if (version.Revision <= 0 && TryGetHklmDword(CurrentVersion, "UBR", out uint ubr) && ubr > 0)
 			version = new Version(version.Major, version.Minor, version.Build, (int) ubr);
 
 		name = CreateDescription(version, server, servicePackVersion, servicePack);
@@ -59,7 +59,7 @@ public static unsafe partial class OperatingSystem
 			else
 			{
 				uint status = GetVersion(&osVersionInfo);
-				if (status != 0)
+				if (status == 0)
 					throw new Win32Exception(NtStatusToDosCode(status));
 			}
 			ParseWindowsVersion(osVersionInfo, out version, out server, out servicePack, out servicePackVersion);
@@ -82,7 +82,7 @@ public static unsafe partial class OperatingSystem
 	private static string CreateDescription(Version version, bool server, Version? servicePackVersion, string? servicePack)
 	{
 		StringBuilder nameBuilder = StringBuilderPool.Shared.Rent(WineInfo.UsesWine ? $"{WineInfo.WineVersion} " : "");
-		nameBuilder.Append($"Windows {ProcessWindowsVersion(version, server, GetHklmString(RegistryPath, "DisplayVersion"))}");
+		nameBuilder.Append($"Windows {ProcessWindowsVersion(version, server, GetHklmString(CurrentVersion, "DisplayVersion"))}");
 
 		string? product = GetProductInfo(version, servicePackVersion);
 
@@ -124,14 +124,14 @@ public static unsafe partial class OperatingSystem
 	{
 		version = null;
 
-		if (TryGetHklmDword(RegistryPath, "CurrentMajorVersionNumber", out uint major) || major <= 0)
+		if (!TryGetHklmDword(CurrentVersion, "CurrentMajorVersionNumber", out uint major) || major <= 0)
 			return false;
 
-		if (TryGetHklmDword(RegistryPath, "CurrentMinorVersionNumber", out uint minor))
+		if (!TryGetHklmDword(CurrentVersion, "CurrentMinorVersionNumber", out uint minor))
 			return false;
 
-		if ((!int.TryParse(GetHklmString(RegistryPath, "CurrentBuildNumber"), out int build) || build <= 0) &&
-			(!int.TryParse(GetHklmString(RegistryPath, "CurrentBuild"), out build) || build <= 0))
+		if ((!int.TryParse(GetHklmString(CurrentVersion, "CurrentBuildNumber"), out int build) || build <= 0) &&
+			(!int.TryParse(GetHklmString(CurrentVersion, "CurrentBuild"), out build) || build <= 0))
 			return false;
 
 		version = new Version((int) major, (int) minor, build);
@@ -369,7 +369,7 @@ public static unsafe partial class OperatingSystem
 
 		const int bufferSize = 8;
 		ushort* data = stackalloc ushort[bufferSize];
-		return GetRegistryValue(key, value, sz, data, bufferSize * sizeof(ushort)) ? null : new string((char*) data);
+		return GetRegistryValue(key, value, sz, data, bufferSize * sizeof(ushort)) ? new string((char*) data) : null;
 	}
 
 	private static bool TryGetHklmDword(string key, string value, out uint result)
@@ -379,6 +379,7 @@ public static unsafe partial class OperatingSystem
 		uint data = 0;
 		bool ret = GetRegistryValue(key, value, dword, &data, sizeof(uint));
 		result = data;
+
 		return ret;
 	}
 
