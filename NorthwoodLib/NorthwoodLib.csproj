@@ -36,7 +36,6 @@
 		<PackageReference Include="System.Collections.Immutable" Version="10.0.9" />
 		<PackageReference Include="System.IO.Pipelines" Version="10.0.9" />
 		<PackageReference Include="System.Text.Encodings.Web" Version="10.0.9" />
-		<PackageReference Include="System.Text.Json" Version="10.0.9" />
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
 		<PackageReference Include="zabszk.DnsClient" Version="1.0.1" />
 		<PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
@@ -45,6 +44,10 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="System.Text.Json" Version="10.0.9" />
 		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.301">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
@@ -53,11 +56,11 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
-		<PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.7.0-beta.1">
+		<PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.4.0-beta.1">
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		  <PrivateAssets>all</PrivateAssets>
 		</PackageReference>
-		<PackageReference Include="ErrorProne.NET.Structs" Version="0.6.1-beta.1">
+		<PackageReference Include="ErrorProne.NET.Structs" Version="0.4.0-beta.1">
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		  <PrivateAssets>all</PrivateAssets>
 		</PackageReference>
