@@ -82,7 +82,7 @@ public static unsafe partial class OperatingSystem
 	private static string CreateDescription(Version version, bool server, Version? servicePackVersion, string? servicePack)
 	{
 		StringBuilder nameBuilder = StringBuilderPool.Shared.Rent(WineInfo.UsesWine ? $"{WineInfo.WineVersion} " : "");
-		nameBuilder.Append($"Windows {ProcessWindowsVersion(version, server, GetHklmString(CurrentVersion, "DisplayVersion"))}");
+		nameBuilder.Append($"Windows {ProcessWindowsVersion(version, server, GetHklmString(CurrentVersion, "DisplayVersion"))} ({version})");
 
 		string? product = GetProductInfo(version, servicePackVersion);
 
