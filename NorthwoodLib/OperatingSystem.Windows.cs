@@ -53,13 +53,13 @@ public static unsafe partial class OperatingSystem
 			if (useLegacy)
 			{
 				int status = GetVersionFallback(&osVersionInfo);
-				if (status != 0)
+				if (status == 0)
 					throw new Win32Exception();
 			}
 			else
 			{
 				uint status = GetVersion(&osVersionInfo);
-				if (status == 0)
+				if (NtError(status))
 					throw new Win32Exception(NtStatusToDosCode(status));
 			}
 			ParseWindowsVersion(osVersionInfo, out version, out server, out servicePack, out servicePackVersion);
@@ -69,7 +69,7 @@ public static unsafe partial class OperatingSystem
 		}
 		catch (Exception ex)
 		{
-			PlatformSettings.Log($"Failed to get Windows version! {ex.Message}", LogType.Warning);
+			PlatformSettings.Log($"Failed to get Windows version using {(useLegacy ? "legacy" : "modern")} API: {ex.Message}", LogType.Warning);
 		}
 
 		version = null;
@@ -399,34 +399,58 @@ public static unsafe partial class OperatingSystem
 
 		try
 		{
-			ushort processArch = 0;
-			ushort systemArch = 0;
-			if (GetArchitecture(GetCurrentProcess(), &processArch, &systemArch) != 0)
-			{
-				systemArchitecture = FromWindowsArch(systemArch);
-				processArchitecture = processArch == 0 ? systemArchitecture : FromWindowsArch(processArch);
-				return true;
-			}
+			ImageMachine processArch = ImageMachine.Unknown;
+			ImageMachine systemArch = ImageMachine.Unknown;
+			if (GetArchitecture(GetCurrentProcess(), &processArch, &systemArch) == 0)
+				throw new Win32Exception();
+
+			if (processArch == ImageMachine.Unknown)
+				processArch = TryGetProcessArchitecture(out ImageMachine machine) ? machine : systemArch;
+
+			systemArchitecture = FromWindowsArch(systemArch);
+			processArchitecture = FromWindowsArch(processArch);
+			return true;
 		}
-		catch
+		catch (Exception exception)
 		{
-			// ignore
+			PlatformSettings.Log($"Failed to get Windows architecture: {exception.Message}", LogType.Warning);
 		}
 
 		return false;
 
-		static Architecture FromWindowsArch(ushort arch)
+		static Architecture FromWindowsArch(ImageMachine arch)
 		{
-			// from https://learn.microsoft.com/en-us/windows/win32/sysinfo/image-file-machine-constants
 			return arch switch
 			{
-				0x014c => Architecture.X86,
-				0x01c0 or 0x01c2 or 0x01c4 => Architecture.Arm,
-				0x01F0 => (Architecture) 8, // PowerPC LE
-				0x8664 => Architecture.X64,
-				0xAA64 => Architecture.Arm64,
-				_ => throw new PlatformNotSupportedException()
+				ImageMachine.I386 => Architecture.X86,
+				ImageMachine.Arm or ImageMachine.Thumb or ImageMachine.ArmNt => Architecture.Arm,
+				ImageMachine.PowerPc or ImageMachine.PowerPcFp => (Architecture) 8, // PowerPC LE
+				ImageMachine.Amd64 => Architecture.X64,
+				ImageMachine.Arm64 => Architecture.Arm64,
+				_ => throw new PlatformNotSupportedException($"{arch} is not a known architecture!")
 			};
 		}
+	}
+
+	private static bool TryGetProcessArchitecture(out ImageMachine machine)
+	{
+		try
+		{
+			const uint processMachineTypeInfo = 9;
+
+			ProcessMachineInformation machineInformation = default;
+			if (GetProcessInformation(GetCurrentProcess(), processMachineTypeInfo, &machineInformation, (uint) sizeof(ProcessMachineInformation)) == 0)
+				throw new Win32Exception();
+
+			machine = machineInformation.ProcessMachine;
+			return true;
+		}
+		catch (Exception exception)
+		{
+			PlatformSettings.Log($"Failed to get process architecture: {exception.Message}", LogType.Warning);
+		}
+
+		machine = ImageMachine.Unknown;
+		return false;
 	}
 }

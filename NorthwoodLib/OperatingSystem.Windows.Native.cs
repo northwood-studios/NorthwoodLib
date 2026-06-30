@@ -49,15 +49,15 @@ public static unsafe partial class OperatingSystem
 	private static extern int GetProductInfo(uint dwOsMajorVersion, uint dwOsMinorVersion, uint dwSpMajorVersion, uint dwSpMinorVersion, uint* pdwReturnedProductType);
 
 	/// <summary>
-	/// Returns the architecture info on the process and operating system.
+	/// Returns the architecture info of the process and operating system.
 	/// <see href="https://learn.microsoft.com/en-us/windows/win32/api/wow64apiset/nf-wow64apiset-iswow64process2"/>
 	/// </summary>
 	/// <param name="process">Target process</param>
 	/// <param name="processArchitecture">Process architecture</param>
 	/// <param name="systemArchitecture">System architecture</param>
 	/// <returns>A nonzero value on success.</returns>
-	[DllImport(Kernel32, EntryPoint = "IsWow64Process2", ExactSpelling = true)]
-	private static extern int GetArchitecture(void* process, ushort* processArchitecture, ushort* systemArchitecture);
+	[DllImport(Kernel32, EntryPoint = "IsWow64Process2", ExactSpelling = true, SetLastError = true)]
+	private static extern int GetArchitecture(void* process, ImageMachine* processArchitecture, ImageMachine* systemArchitecture);
 
 	/// <summary>
 	/// Retrieves a pseudo handle for the current process.
@@ -66,6 +66,18 @@ public static unsafe partial class OperatingSystem
 	/// <returns>A pseudo handle to the current process.</returns>
 	[DllImport(Kernel32, EntryPoint = "GetCurrentProcess", ExactSpelling = true)]
 	private static extern void* GetCurrentProcess();
+
+	/// <summary>
+	/// Returns information about the process
+	/// <see href="https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocessinformation"/>
+	/// </summary>
+	/// <param name="process">Target process</param>
+	/// <param name="informationClass">Information type</param>
+	/// <param name="information">Information buffer</param>
+	/// <param name="informationSize">Information buffer size</param>
+	/// <returns>A nonzero value on success.</returns>
+	[DllImport(Kernel32, EntryPoint = "GetProcessInformation", ExactSpelling = true, SetLastError = true)]
+	private static extern int GetProcessInformation(void* process, uint informationClass, void* information, uint informationSize);
 
 	private static bool GetRegistryValue(string key, string value, uint sz, void* data, uint dataSize)
 	{
@@ -76,6 +88,8 @@ public static unsafe partial class OperatingSystem
 		fixed (char* valuePointer = value)
 			return RegGetValue(Hklm, (ushort*) keyPointer, (ushort*) valuePointer, sz, null, data, &dataSize) == 0;
 	}
+
+	private static bool NtError(uint status) => status >> 30 == 3;
 
 	/// <summary>
 	/// Managed version of <see href="https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_osversioninfoexw"/>
@@ -138,5 +152,57 @@ public static unsafe partial class OperatingSystem
 		/// Reserved for future use.
 		/// </summary>
 		private byte wReserved;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	private struct ProcessMachineInformation
+	{
+		public ImageMachine ProcessMachine;
+		private ushort Res0;
+		private MachineAttributes MachineAttributes;
+	}
+
+	// from https://learn.microsoft.com/en-us/windows/win32/sysinfo/image-file-machine-constants
+	private enum ImageMachine : ushort
+	{
+		Unknown = 0,
+		TargetHost = 0x0001,
+		I386 = 0x014c,
+		R3000 = 0x0162,
+		R4000 = 0x0166,
+		R10000 = 0x0168,
+		WceMipsV2 = 0x0169,
+		Alpha = 0x0184,
+		Sh3 = 0x01a2,
+		Sh3Dsp = 0x01a3,
+		Sh3E = 0x01a4,
+		Sh4 = 0x01a6,
+		Sh5 = 0x01a8,
+		Arm = 0x01c0,
+		Thumb = 0x01c2,
+		ArmNt = 0x01c4,
+		Am33 = 0x01d3,
+		PowerPc = 0x01F0,
+		PowerPcFp = 0x01f1,
+		Ia64 = 0x0200,
+		Mips16 = 0x0266,
+		Alpha64 = 0x0284,
+		MipsFpu = 0x0366,
+		MipsFpu16 = 0x0466,
+		Axp64 = Alpha64,
+		Tricore = 0x0520,
+		Cef = 0x0CEF,
+		Ebc = 0x0EBC,
+		Amd64 = 0x8664,
+		M32R = 0x9041,
+		Arm64 = 0xAA64,
+		Cee = 0xC0EE
+	}
+
+	private enum MachineAttributes : uint
+	{
+		UserEnabled = 0x00000001,
+		KernelEnabled = 0x00000002,
+		Wow64Container = 0x00000004
 	}
 }
