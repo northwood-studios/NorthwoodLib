@@ -63,9 +63,9 @@ public sealed class ActionDispatcher
 	/// <param name="func">Queued <see cref="Func{TResult}"/></param>
 	/// <param name="sleepTime">Finish check sleep time</param>
 	/// <returns>Value returned by <see param="func"/></returns>
-	public T Wait<T>(Func<T> func, int sleepTime)
+	public T? Wait<T>(Func<T?> func, int sleepTime)
 	{
-		T result = default;
+		T? result = default;
 		bool finished = false;
 		_actionQueue.Enqueue(() =>
 		{

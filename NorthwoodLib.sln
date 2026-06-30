@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthwoodLib", "NorthwoodLi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthwoodLib.Tests", "NorthwoodLib.Tests\NorthwoodLib.Tests.csproj", "{07755203-5D91-42E9-B576-32099B2CCD45}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthwoodLib.Tester", "NorthwoodLib.Tester\NorthwoodLib.Tester.csproj", "{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,9 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{2CEC9B35-D8E6-4CD2-9CB4-29B671712C5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -44,5 +43,20 @@ Global
 		{07755203-5D91-42E9-B576-32099B2CCD45}.Release|x64.Build.0 = Release|Any CPU
 		{07755203-5D91-42E9-B576-32099B2CCD45}.Release|x86.ActiveCfg = Release|Any CPU
 		{07755203-5D91-42E9-B576-32099B2CCD45}.Release|x86.Build.0 = Release|Any CPU
+		{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}.Debug|x64.Build.0 = Debug|Any CPU
+		{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}.Debug|x86.Build.0 = Debug|Any CPU
+		{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}.Release|x64.ActiveCfg = Release|Any CPU
+		{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}.Release|x64.Build.0 = Release|Any CPU
+		{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}.Release|x86.ActiveCfg = Release|Any CPU
+		{9B822A06-BE63-4AFA-BCD3-8CB3C2E8124A}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal
