@@ -38,7 +38,7 @@
 		<PackageReference Include="System.Text.Encodings.Web" Version="10.0.10" />
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
 		<PackageReference Include="zabszk.DnsClient" Version="1.0.1" />
-		<PackageReference Include="BouncyCastle.Cryptography" Version="2.6.2" />
+		<PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
 		<PackageReference Include="ZXing.Net" Version="0.16.11" />
 		<PackageReference Include="PolySharp" Version="1.16.0">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
