@@ -33,7 +33,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.10" />
-		<PackageReference Include="System.Collections.Immutable" Version="10.0.10" />
+		<PackageReference Include="System.Collections.Immutable" Version="10.0.13" />
 		<PackageReference Include="System.IO.Pipelines" Version="10.0.10" />
 		<PackageReference Include="System.Text.Encodings.Web" Version="10.0.10" />
 		<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
